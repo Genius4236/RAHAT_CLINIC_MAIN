@@ -1,61 +1,64 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+import axios from 'axios'
 
-const request = async (path, options = {}) => {
-  const url = `${API_BASE}${path}`;
-  const res = await fetch(url, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || res.statusText || 'Request failed');
-  return data;
-};
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'
+
+// Create axios instance
+const axiosInstance = axios.create({
+  baseURL: API_BASE,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Response error handler
+axiosInstance.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const message = error.response?.data?.message || error.message || 'An error occurred'
+    return Promise.reject(new Error(message))
+  }
+)
 
 export const api = {
+  // Auth
   login: (email, password, role) =>
-    request('/user/login', { method: 'POST', body: JSON.stringify({ email, password, role }) }),
+    axiosInstance.post('/user/login', { email, password, role }),
   register: (body) =>
-    request('/user/patient/register', { method: 'POST', body: JSON.stringify(body) }),
-  getDoctors: () => request('/user/doctors'),
-  getPatient: () => request('/user/patient/me'),
+    axiosInstance.post('/user/patient/register', body),
+  logoutPatient: () => axiosInstance.post('/user/patient/logout'),
+  logoutAdmin: () => axiosInstance.post('/user/admin/logout'),
+
+  // Patient
+  getPatient: () => axiosInstance.get('/user/patient/me'),
+
+  // Doctors
+  getDoctors: () => axiosInstance.get('/user/doctors'),
+
+  // Appointments
   postAppointment: (body) =>
-    request('/appointment/post', { method: 'POST', body: JSON.stringify(body) }),
+    axiosInstance.post('/appointment/post', body),
+  getAppointments: () => axiosInstance.get('/appointment/getall'),
+  updateAppointment: (id, body) =>
+    axiosInstance.put(`/appointment/update/${id}`, body),
+  deleteAppointment: (id) =>
+    axiosInstance.delete(`/appointment/delete/${id}`),
+
+  // Messages
   sendMessage: (body) =>
-    request('/message/send', { method: 'POST', body: JSON.stringify(body) }),
-  logoutPatient: () => request('/user/patient/logout'),
+    axiosInstance.post('/message/send', body),
 
   // Admin
-  getAdmin: () => request('/user/admin/me'),
-  logoutAdmin: () => request('/user/admin/logout'),
+  getAdmin: () => axiosInstance.get('/user/admin/me'),
   addAdmin: (body) =>
-    request('/user/admin/addnew', { method: 'POST', body: JSON.stringify(body) }),
-
-  // Appointments (admin)
-  getAppointments: () => request('/appointment/getall'),
-  updateAppointment: (id, body) =>
-    request(`/appointment/update/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteAppointment: (id) =>
-    request(`/appointment/delete/${id}`, { method: 'DELETE' }),
-
-  // Doctors (admin, with file upload)
-  addDoctor: async (formData) => {
-    const url = `${API_BASE}/user/doctor/addnew`;
-    const res = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || res.statusText || 'Request failed');
-    return data;
-  },
+    axiosInstance.post('/user/admin/addnew', body),
+  addDoctor: (formData) =>
+    axiosInstance.post('/user/doctor/addnew', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 
   // Payments
-  getPaymentKey: () => request('/product/payment/key'),
+  getPaymentKey: () => axiosInstance.get('/product/payment/key'),
   processPayment: (amount) =>
-    request('/product/payment/process', { method: 'POST', body: JSON.stringify({ amount }) }),
-};
+    axiosInstance.post('/product/payment/process', { amount }),
+}

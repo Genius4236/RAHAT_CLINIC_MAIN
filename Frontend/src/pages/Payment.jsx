@@ -4,7 +4,7 @@ import { api } from '../api'
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'
 
 export default function Payment() {
-  const [amount, setAmount] = useState(500)
+  const [amount, setAmount] = useState(200) // Default amount for testing
   const [key, setKey] = useState('')
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState('')
