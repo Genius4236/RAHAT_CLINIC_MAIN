@@ -24,7 +24,6 @@ export default function BookAppointment() {
     department: '',
     doctor_firstName: '',
     doctor_lastName: '',
-    hasVisited: false,
     address: '',
   })
 
@@ -250,16 +249,6 @@ export default function BookAppointment() {
           <div className="form-group">
             <label>Address</label>
             <input name="address" value={form.address} onChange={handleChange} required placeholder="Full address" />
-          </div>
-          <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              name="hasVisited"
-              id="hasVisited"
-              checked={form.hasVisited}
-              onChange={handleChange}
-            />
-            <label htmlFor="hasVisited" style={{ marginBottom: 0 }}>I have visited before</label>
           </div>
           {error && <p className="error-msg">{error}</p>}
           {success && <p className="success-msg">Appointment request sent. We’ll confirm shortly.</p>}

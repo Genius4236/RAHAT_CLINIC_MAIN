@@ -44,8 +44,12 @@ export const api = {
   getDoctorAppointments: () => axiosInstance.get('/appointment/doctor'),
   updateAppointment: (id, body) =>
     axiosInstance.put(`/appointment/update/${id}`, body),
+  updateAppointmentStatus: (id, status) =>
+    axiosInstance.put(`/appointment/doctor-status/${id}`, { status }),
   rescheduleAppointment: (id, body) =>
     axiosInstance.put(`/appointment/reschedule/${id}`, body),
+  cancelAppointment: (id) =>
+    axiosInstance.delete(`/appointment/cancel/${id}`),
   deleteAppointment: (id) =>
     axiosInstance.delete(`/appointment/delete/${id}`),
   addAppointmentNotes: (id, body) =>
@@ -108,6 +112,32 @@ export const api = {
     }),
   getAppointmentPayment: (appointmentId) =>
     axiosInstance.get(`/payment/appointment/${appointmentId}`),
+  refundPayment: (paymentId, reason) =>
+    axiosInstance.post(`/payment/refund/${paymentId}`, { reason }),
+  getAdminPaymentStats: (startDate, endDate) =>
+    axiosInstance.get('/payment/admin/stats', {
+      params: { startDate, endDate },
+    }),
+  getAdminPayments: (page = 1, limit = 20, status) =>
+    axiosInstance.get('/payment/admin/list', {
+      params: { page, limit, status },
+    }),
+
+  // Documents
+  uploadDocument: (formData) =>
+    axiosInstance.post('/document/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  getPatientDocuments: (patientId) =>
+    axiosInstance.get(`/document/patient/${patientId}`),
+  getDocumentById: (documentId) =>
+    axiosInstance.get(`/document/${documentId}`),
+  deleteDocument: (documentId) =>
+    axiosInstance.delete(`/document/${documentId}`),
+  getAllDocuments: (page = 1, limit = 10, patientId) =>
+    axiosInstance.get('/document/', {
+      params: { page, limit, patientId },
+    }),
 
   // Password Reset
   requestPasswordReset: (email) =>

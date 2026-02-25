@@ -11,6 +11,7 @@ import appointmentRouter from "./router/appointmentRouter.js";
 import productRouter from "./router/ProductRouter.js";
 import availabilityRouter from "./router/availabilityRouter.js";
 import paymentRouter from "./router/paymentRouter.js";
+import documentRouter from "./router/documentRouter.js";
 
 const app = express();
 dbConnection();
@@ -37,6 +38,7 @@ app.use("/api/v1/appointment", appointmentRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/availability", availabilityRouter);
 app.use("/api/v1/payment", paymentRouter);
+app.use("/api/v1/document", documentRouter);
 
 
 

@@ -54,10 +54,6 @@ const appointmentSchema = new mongoose.Schema({
                         required: true,
                     },
                 },
-                hasVisited: {
-                    type: Boolean,
-                    default: false,
-                },
                 doctorId: {
                     type: mongoose.Schema.ObjectId,
                     required: true,

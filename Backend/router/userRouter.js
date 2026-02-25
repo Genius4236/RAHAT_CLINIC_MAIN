@@ -2,7 +2,7 @@ import express from "express";
 import { getAllDoctors, getUserDetails, patientRegister, logoutAdmin, logoutPatient, logoutDoctor, addNewDoctor, requestPasswordReset, verifyResetToken, resetPassword, changePassword, updateUserProfile} from "../controller/userController.js";
 import { login } from "../controller/userController.js";
 import { addNewAdmin } from "../controller/userController.js";
-import {isAdminAuthenticated, isPatientAuthenticated, isDoctorAuthenticated} from "../middlewares/auth.js";
+import {isAdminAuthenticated, isPatientAuthenticated, isDoctorAuthenticated, isAuthenticated} from "../middlewares/auth.js";
 
 const router =express.Router();
 
@@ -22,9 +22,9 @@ router.post("/doctor/addnew", isAdminAuthenticated, addNewDoctor);
 router.post("/password/request-reset", requestPasswordReset);
 router.post("/password/verify-token", verifyResetToken);
 router.post("/password/reset", resetPassword);
-router.post("/password/change", isPatientAuthenticated, changePassword);
+router.post("/password/change", isAuthenticated, changePassword);
 
-// User profile routes
-router.put("/profile/update", isPatientAuthenticated, updateUserProfile);
+// User profile routes (any logged-in user)
+router.put("/profile/update", isAuthenticated, updateUserProfile);
 
 export default router;

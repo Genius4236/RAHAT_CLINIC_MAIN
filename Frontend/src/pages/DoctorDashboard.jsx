@@ -18,6 +18,11 @@ export default function DoctorDashboard() {
     slotDuration: 30,
   })
   const [submitting, setSubmitting] = useState(false)
+  const [editingAvail, setEditingAvail] = useState(null)
+  const [editForm, setEditForm] = useState({ startTime: '09:00', endTime: '17:00', slotDuration: 30 })
+  const [notesModal, setNotesModal] = useState(null)
+  const [notesForm, setNotesForm] = useState({ appointmentNotes: '', prescription: '' })
+  const [notesSubmitting, setNotesSubmitting] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -75,25 +80,91 @@ export default function DoctorDashboard() {
     }
   }
 
-  const markVisited = async (id, hasVisited) => {
-    try {
-      await api.updateAppointment(id, { hasVisited })
-      setAppointments((prev) =>
-        prev.map((a) => (a._id === id ? { ...a, hasVisited } : a))
-      )
-    } catch (err) {
-      setError(err.message || 'Failed to update appointment')
-    }
-  }
-
   const deleteAvailability = async (id) => {
     if (window.confirm('Delete this availability slot?')) {
       try {
         await api.deleteAvailability(id)
         setAvailability((prev) => prev.filter((a) => a._id !== id))
+        setEditingAvail(null)
       } catch (err) {
         setError(err.message || 'Failed to delete availability')
       }
+    }
+  }
+
+  const openEditAvail = (a) => {
+    setEditingAvail(a)
+    setEditForm({ startTime: a.startTime, endTime: a.endTime, slotDuration: a.slotDuration })
+  }
+
+  const handleEditAvailChange = (e) => {
+    const { name, value } = e.target
+    setEditForm((f) => ({ ...f, [name]: name === 'slotDuration' ? Number(value) : value }))
+  }
+
+  const openNotesModal = (a) => {
+    setNotesModal(a)
+    setNotesForm({
+      appointmentNotes: a.appointmentNotes || '',
+      prescription: a.prescription || '',
+    })
+  }
+
+  const handleAddNotes = async (e) => {
+    e.preventDefault()
+    if (!notesModal) return
+    if (!notesForm.appointmentNotes && !notesForm.prescription) {
+      setError('Add at least notes or prescription')
+      return
+    }
+    setNotesSubmitting(true)
+    setError('')
+    try {
+      await api.addAppointmentNotes(notesModal._id, notesForm)
+      setAppointments((prev) =>
+        prev.map((a) =>
+          a._id === notesModal._id ? { ...a, ...notesForm, status: 'Accepted' } : a
+        )
+      )
+      setNotesModal(null)
+      alert('Notes added successfully!')
+    } catch (err) {
+      setError(err.message || 'Failed to add notes')
+    } finally {
+      setNotesSubmitting(false)
+    }
+  }
+
+  const handleStatusChange = async (appointmentId, newStatus) => {
+    try {
+      await api.updateAppointmentStatus(appointmentId, newStatus)
+      setAppointments((prev) =>
+        prev.map((a) => (a._id === appointmentId ? { ...a, status: newStatus } : a))
+      )
+    } catch (err) {
+      setError(err.message || 'Failed to update status')
+    }
+  }
+
+  const getVideoMeetingUrl = (appointmentId) => {
+    const roomName = `rahat-${appointmentId}`.replace(/[^a-zA-Z0-9-]/g, '-')
+    return `https://meet.jit.si/${roomName}`
+  }
+
+  const handleUpdateAvailability = async (e) => {
+    e.preventDefault()
+    if (!editingAvail) return
+    try {
+      await api.updateAvailability(editingAvail._id, editForm)
+      setAvailability((prev) =>
+        prev.map((a) =>
+          a._id === editingAvail._id ? { ...a, ...editForm } : a
+        )
+      )
+      setEditingAvail(null)
+      alert('Availability updated successfully!')
+    } catch (err) {
+      setError(err.message || 'Failed to update availability')
     }
   }
 
@@ -172,20 +243,48 @@ export default function DoctorDashboard() {
                       {a.firstName} {a.lastName}
                     </div>
                     <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                      {a.department} • {new Date(a.appointment_date).toLocaleDateString()} • Status:{' '}
-                      <strong style={{ color: 'var(--color-text)' }}>{a.status}</strong>
+                      {a.department} • {new Date(a.appointment_date).toLocaleDateString()} at {a.appointment_time}
                     </div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                      {a.hasVisited ? '✓ Visited' : 'Not visited'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.9rem' }}>Status:</label>
+                      <select
+                        value={a.status}
+                        onChange={(e) => handleStatusChange(a._id, e.target.value)}
+                        style={{
+                          padding: '0.35rem 0.5rem',
+                          borderRadius: 'var(--radius)',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-bg)',
+                          fontSize: '0.9rem',
+                          minWidth: 120,
+                        }}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
                     </div>
                   </div>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => markVisited(a._id, !a.hasVisited)}
-                    style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-                  >
-                    Mark {a.hasVisited ? 'not visited' : 'visited'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => openNotesModal(a)}
+                      style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                    >
+                      {a.appointmentNotes || a.prescription ? 'Edit Notes' : 'Add Notes / Prescription'}
+                    </button>
+                    {a.status === 'Accepted' && (
+                      <a
+                        href={getVideoMeetingUrl(a._id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', textDecoration: 'none' }}
+                      >
+                        Join Video Call
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -344,18 +443,178 @@ export default function DoctorDashboard() {
                         {a.startTime} - {a.endTime} ({a.slotDuration} min slots)
                       </div>
                     </div>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => deleteAvailability(a._id)}
-                      style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-                    >
-                      Delete
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        className="btn btn-outline"
+                        onClick={() => openEditAvail(a)}
+                        style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => deleteAvailability(a._id)}
+                        style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           </section>
+        )}
+
+        {notesModal && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+            onClick={() => setNotesModal(null)}
+          >
+            <div
+              style={{
+                background: 'var(--color-bg)',
+                padding: '1.5rem',
+                borderRadius: 'var(--radius)',
+                maxWidth: 500,
+                width: '90%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ marginBottom: '0.5rem' }}>Notes & Prescription</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--color-muted)', marginBottom: '1rem' }}>
+                {notesModal.firstName} {notesModal.lastName} • {notesModal.department}
+              </p>
+              <form onSubmit={handleAddNotes} style={{ display: 'grid', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Appointment Notes</label>
+                  <textarea
+                    name="appointmentNotes"
+                    value={notesForm.appointmentNotes}
+                    onChange={(e) => setNotesForm((f) => ({ ...f, appointmentNotes: e.target.value }))}
+                    rows={4}
+                    placeholder="Clinical notes, diagnosis, follow-up instructions..."
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)' }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Prescription</label>
+                  <textarea
+                    name="prescription"
+                    value={notesForm.prescription}
+                    onChange={(e) => setNotesForm((f) => ({ ...f, prescription: e.target.value }))}
+                    rows={4}
+                    placeholder="Medications, dosage, duration..."
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={notesSubmitting}>
+                    {notesSubmitting ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ flex: 1 }}
+                    onClick={() => setNotesModal(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {editingAvail && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+            onClick={() => setEditingAvail(null)}
+          >
+            <div
+              style={{
+                background: 'var(--color-bg)',
+                padding: '1.5rem',
+                borderRadius: 'var(--radius)',
+                maxWidth: 400,
+                width: '90%',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ marginBottom: '1rem' }}>Edit Availability</h3>
+              <form onSubmit={handleUpdateAvailability} style={{ display: 'grid', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Start Time</label>
+                  <input
+                    type="time"
+                    name="startTime"
+                    value={editForm.startTime}
+                    onChange={handleEditAvailChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>End Time</label>
+                  <input
+                    type="time"
+                    name="endTime"
+                    value={editForm.endTime}
+                    onChange={handleEditAvailChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Slot Duration (minutes)</label>
+                  <input
+                    type="number"
+                    name="slotDuration"
+                    value={editForm.slotDuration}
+                    onChange={handleEditAvailChange}
+                    min="15"
+                    max="120"
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ flex: 1 }}
+                    onClick={() => setEditingAvail(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </div>

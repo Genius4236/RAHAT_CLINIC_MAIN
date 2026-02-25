@@ -50,3 +50,17 @@ export const isAuthorized=(...roles) =>{
     next();
   };
 };
+
+// Accept any authenticated user (Admin, Patient, or Doctor)
+export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
+    const token = req.cookies.adminToken || req.cookies.patientToken || req.cookies.doctorToken;
+    if (!token) {
+        return next(new ErrorHandler("Not authenticated", 400));
+    }
+    const decode = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    req.user = await User.findById(decode.id);
+    if (!req.user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+    next();
+});

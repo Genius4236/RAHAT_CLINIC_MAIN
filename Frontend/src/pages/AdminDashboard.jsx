@@ -33,6 +33,13 @@ export default function AdminDashboard() {
   const [doctorAvatar, setDoctorAvatar] = useState(null)
   const [doctorSubmitting, setDoctorSubmitting] = useState(false)
   const [doctorSuccess, setDoctorSuccess] = useState('')
+  const [paymentStats, setPaymentStats] = useState(null)
+  const [adminTab, setAdminTab] = useState('overview')
+  const [payments, setPayments] = useState([])
+  const [documents, setDocuments] = useState([])
+  const [docForm, setDocForm] = useState({ patientId: '', title: '', description: '', documentType: 'Other' })
+  const [docFile, setDocFile] = useState(null)
+  const [docSubmitting, setDocSubmitting] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -44,12 +51,18 @@ export default function AdminDashboard() {
           return
         }
         setAdmin(me.user)
-        const [docRes, apptRes] = await Promise.all([
+        const [docRes, apptRes, statsRes, payRes, docListRes] = await Promise.all([
           api.getDoctors().catch(() => ({ doctors: [] })),
           api.getAppointments().catch(() => ({ appointments: [] })),
+          api.getAdminPaymentStats().catch(() => null),
+          api.getAdminPayments(1, 50).catch(() => ({ payments: [] })),
+          api.getAllDocuments(1, 50).catch(() => ({ documents: [] })),
         ])
         setDoctors(docRes.doctors || [])
         setAppointments(apptRes.appointments || [])
+        setPaymentStats(statsRes?.stats || null)
+        setPayments(payRes.payments || [])
+        setDocuments(docListRes.documents || [])
       } catch (err) {
         setError(err.message || 'Failed to load admin data')
       } finally {
@@ -127,17 +140,6 @@ export default function AdminDashboard() {
     }
   }
 
-  const markVisited = async (id, hasVisited) => {
-    try {
-      await api.updateAppointment(id, { hasVisited })
-      setAppointments((prev) =>
-        prev.map((a) => (a._id === id ? { ...a, hasVisited } : a)),
-      )
-    } catch (err) {
-      setError(err.message || 'Failed to update appointment')
-    }
-  }
-
   const deleteAppointment = async (id) => {
     try {
       await api.deleteAppointment(id)
@@ -146,6 +148,67 @@ export default function AdminDashboard() {
       setError(err.message || 'Failed to delete appointment')
     }
   }
+
+  const refundPayment = async (paymentId) => {
+    if (!window.confirm('Refund this payment?')) return
+    try {
+      await api.refundPayment(paymentId)
+      setPayments((prev) =>
+        prev.map((p) => (p._id === paymentId ? { ...p, status: 'Refunded' } : p))
+      )
+      if (paymentStats) {
+        setPaymentStats((s) => ({
+          ...s,
+          totalTransactions: Math.max(0, (s.totalTransactions || 0) - 1),
+        }))
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to refund')
+    }
+  }
+
+  const submitDocument = async (e) => {
+    e.preventDefault()
+    if (!docFile || !docForm.patientId || !docForm.title) {
+      setError('Patient, title, and file are required')
+      return
+    }
+    setDocSubmitting(true)
+    setError('')
+    try {
+      const formData = new FormData()
+      formData.append('patientId', docForm.patientId)
+      formData.append('title', docForm.title)
+      formData.append('description', docForm.description || '')
+      formData.append('documentType', docForm.documentType || 'Other')
+      formData.append('document', docFile)
+      await api.uploadDocument(formData)
+      const res = await api.getAllDocuments(1, 50)
+      setDocuments(res.documents || [])
+      setDocForm({ patientId: '', title: '', description: '', documentType: 'Other' })
+      setDocFile(null)
+    } catch (err) {
+      setError(err.message || 'Failed to upload document')
+    } finally {
+      setDocSubmitting(false)
+    }
+  }
+
+  const deleteDocument = async (id) => {
+    if (!window.confirm('Delete this document?')) return
+    try {
+      await api.deleteDocument(id)
+      setDocuments((prev) => prev.filter((d) => d._id !== id))
+    } catch (err) {
+      setError(err.message || 'Failed to delete document')
+    }
+  }
+
+  const patientsFromAppointments = [...new Map(
+    appointments
+      .filter((a) => a.patientId)
+      .map((a) => [a.patientId._id || a.patientId, a.patientId])
+  ).values()]
 
   if (loading) {
     return (
@@ -177,6 +240,56 @@ export default function AdminDashboard() {
         </header>
 
         {error && <p className="error-msg">{error}</p>}
+
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', borderBottom: '1px solid var(--color-border)' }}>
+          {['overview', 'payments', 'documents'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setAdminTab(tab)}
+              style={{
+                padding: '0.5rem 1rem',
+                background: adminTab === tab ? 'var(--color-primary)' : 'transparent',
+                color: adminTab === tab ? 'white' : 'inherit',
+                border: 'none',
+                cursor: 'pointer',
+                textTransform: 'capitalize',
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {adminTab === 'overview' && (
+          <>
+        {paymentStats && (
+          <section
+            style={{
+              padding: '1rem',
+              borderRadius: 'var(--radius)',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
+              Payment Stats
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Total Revenue</div>
+                <div style={{ fontWeight: 600, fontSize: '1.25rem' }}>₹{paymentStats.totalRevenue?.toFixed(2) ?? 0}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Transactions</div>
+                <div style={{ fontWeight: 600, fontSize: '1.25rem' }}>{paymentStats.totalTransactions ?? 0}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Avg Transaction</div>
+                <div style={{ fontWeight: 600, fontSize: '1.25rem' }}>₹{paymentStats.averageTransaction?.toFixed(2) ?? 0}</div>
+              </div>
+            </div>
+          </section>
+        )}
 
         <section>
           <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Doctors</h2>
@@ -236,18 +349,10 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                    Doctor: {a.doctor?.firstName} {a.doctor?.lastName} •{' '}
-                    {a.hasVisited ? 'Visited' : 'Not visited'}
+                    Doctor: {a.doctor?.firstName} {a.doctor?.lastName}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    className="btn btn-outline"
-                    type="button"
-                    onClick={() => markVisited(a._id, !a.hasVisited)}
-                  >
-                    Mark {a.hasVisited ? 'not visited' : 'visited'}
-                  </button>
                   <button
                     className="btn btn-primary"
                     type="button"
@@ -372,6 +477,8 @@ export default function AdminDashboard() {
             </form>
           </div>
         </section>
+        </>
+        )}
       </div>
     </div>
   )

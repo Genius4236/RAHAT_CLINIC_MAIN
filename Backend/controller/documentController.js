@@ -3,7 +3,7 @@ import ErrorHandler from "../middlewares/errorMiddleware.js";
 import { Document } from "../models/documentSchema.js";
 import { User } from "../models/userSchema.js";
 
-// Upload a document for a patient
+// Upload a document for a patient (express-fileupload: req.files.document or req.files.file)
 export const uploadDocument = catchAsyncErrors(async (req, res, next) => {
     const { patientId, title, description, documentType } = req.body;
 
@@ -11,13 +11,13 @@ export const uploadDocument = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Patient ID and title are required", 400));
     }
 
-    // Check if patient exists
     const patient = await User.findById(patientId);
     if (!patient || patient.role !== "Patient") {
         return next(new ErrorHandler("Patient not found", 404));
     }
 
-    if (!req.file) {
+    const file = req.files?.document || req.files?.file;
+    if (!file) {
         return next(new ErrorHandler("No file uploaded", 400));
     }
 
@@ -26,10 +26,10 @@ export const uploadDocument = catchAsyncErrors(async (req, res, next) => {
         title,
         description,
         documentType: documentType || "Other",
-        fileName: req.file.originalname,
-        filePath: req.file.path,
-        fileType: req.file.mimetype,
-        fileSize: req.file.size,
+        fileName: file.name,
+        filePath: file.tempFilePath || file.name,
+        fileType: file.mimetype,
+        fileSize: file.size,
         uploadedBy: req.user._id,
     });
 

@@ -17,6 +17,74 @@ export default function PatientDashboard() {
   const [availability, setAvailability] = useState([])     // NEW: Track available slots
   const [availabilityLoading, setAvailabilityLoading] = useState(false) // NEW: Track loading state
   const [rescheduling, setRescheduling] = useState(false)
+  const [paymentLoading, setPaymentLoading] = useState(null)
+
+  const loadRazorpayScript = () =>
+    new Promise((resolve, reject) => {
+      if (document.getElementById('razorpay-script')) {
+        resolve()
+        return
+      }
+      const script = document.createElement('script')
+      script.id = 'razorpay-script'
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = resolve
+      script.onerror = reject
+      document.body.appendChild(script)
+    })
+
+  const payForAppointment = async (appointment) => {
+    const amount = 500
+    setPaymentLoading(appointment._id)
+    setError('')
+    try {
+      await loadRazorpayScript()
+      const keyRes = await api.getPaymentKey()
+      const key = keyRes.key
+      const { payment, order } = await api.createPaymentOrder(appointment._id, amount)
+
+      const options = {
+        key,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'Rahat Clinic',
+        description: `Payment for appointment - ${appointment.department}`,
+        order_id: order.id,
+        handler: async (response) => {
+          try {
+            await api.verifyPayment(
+              response.razorpay_payment_id,
+              response.razorpay_order_id,
+              response.razorpay_signature,
+              appointment._id
+            )
+            setAppointments((prev) =>
+              prev.map((a) =>
+                a._id === appointment._id ? { ...a, paymentStatus: 'Completed' } : a
+              )
+            )
+            const payRes = await api.getPaymentHistory()
+            setPayments(payRes.payments || [])
+            alert('Payment successful!')
+          } catch (err) {
+            setError(err.message || 'Payment verification failed')
+          } finally {
+            setPaymentLoading(null)
+          }
+        },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', () => {
+        setError('Payment failed')
+        setPaymentLoading(null)
+      })
+      rzp.open()
+    } catch (err) {
+      setError(err.message || 'Could not start payment')
+      setPaymentLoading(null)
+    }
+  }
 
   // Load initial dashboard data
   useEffect(() => {
@@ -64,7 +132,7 @@ export default function PatientDashboard() {
   const cancelAppointment = async (id) => {
     if (window.confirm('Are you sure you want to cancel this appointment?')) {
       try {
-        await api.deleteAppointment(id)
+        await api.cancelAppointment(id)
         setAppointments((prev) => prev.filter((a) => a._id !== id))
       } catch (err) {
         setError(err.message || 'Failed to cancel appointment')
@@ -194,9 +262,49 @@ export default function PatientDashboard() {
                       </div>
                       <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
                         Status: <strong style={{ color: 'var(--color-text)' }}>{a.status}</strong>
+                        {a.paymentStatus && (
+                          <> • Payment: <strong>{a.paymentStatus}</strong></>
+                        )}
                       </div>
+                      {(a.appointmentNotes || a.prescription) && (
+                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'var(--color-bg)', borderRadius: 'var(--radius)', fontSize: '0.9rem' }}>
+                          {a.appointmentNotes && (
+                            <div style={{ marginBottom: a.prescription ? '0.5rem' : 0 }}>
+                              <strong>Notes:</strong>
+                              <p style={{ margin: '0.25rem 0 0', whiteSpace: 'pre-wrap' }}>{a.appointmentNotes}</p>
+                            </div>
+                          )}
+                          {a.prescription && (
+                            <div>
+                              <strong>Prescription:</strong>
+                              <p style={{ margin: '0.25rem 0 0', whiteSpace: 'pre-wrap' }}>{a.prescription}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {a.status === 'Accepted' && (
+                        <a
+                          href={`https://meet.jit.si/rahat-${a._id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline"
+                          style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', textDecoration: 'none' }}
+                        >
+                          Join Video Call
+                        </a>
+                      )}
+                      {a.paymentStatus !== 'Completed' && a.status !== 'Rejected' && (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => payForAppointment(a)}
+                          disabled={!!paymentLoading}
+                          style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                        >
+                          {paymentLoading === a._id ? 'Opening…' : 'Pay (₹500)'}
+                        </button>
+                      )}
                       {a.status !== 'Rejected' && (
                         <>
                           <button

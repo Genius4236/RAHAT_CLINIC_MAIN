@@ -8,6 +8,15 @@ export default function UserProfile() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isEditing, setIsEditing] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -32,6 +41,39 @@ export default function UserProfile() {
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+  }
+
+  const handlePasswordChange = (e) => {
+    setPasswordForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New passwords do not match')
+      return
+    }
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters')
+      return
+    }
+    setPasswordLoading(true)
+    try {
+      await api.changePassword(
+        passwordForm.oldPassword,
+        passwordForm.newPassword,
+        passwordForm.confirmPassword
+      )
+      setPasswordSuccess('Password changed successfully!')
+      setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' })
+      setShowChangePassword(false)
+    } catch (err) {
+      setPasswordError(err.message || 'Failed to change password')
+    } finally {
+      setPasswordLoading(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -148,6 +190,80 @@ export default function UserProfile() {
             >
               Edit Profile
             </button>
+
+            <div
+              style={{
+                padding: '1.5rem',
+                borderRadius: 'var(--radius)',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>Change Password</h3>
+              {!showChangePassword ? (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowChangePassword(true)}
+                >
+                  Change Password
+                </button>
+              ) : (
+                <form onSubmit={handleChangePassword} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+                  {passwordError && <p className="error-msg">{passwordError}</p>}
+                  {passwordSuccess && <p className="success-msg">{passwordSuccess}</p>}
+                  <div className="form-group">
+                    <label>Current Password *</label>
+                    <input
+                      type="password"
+                      name="oldPassword"
+                      value={passwordForm.oldPassword}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>New Password *</label>
+                    <input
+                      type="password"
+                      name="newPassword"
+                      value={passwordForm.newPassword}
+                      onChange={handlePasswordChange}
+                      minLength={8}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Confirm New Password *</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={passwordForm.confirmPassword}
+                      onChange={handlePasswordChange}
+                      minLength={8}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button type="submit" className="btn btn-primary" disabled={passwordLoading}>
+                      {passwordLoading ? 'Updating…' : 'Update Password'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() => {
+                        setShowChangePassword(false)
+                        setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' })
+                        setPasswordError('')
+                        setPasswordSuccess('')
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>

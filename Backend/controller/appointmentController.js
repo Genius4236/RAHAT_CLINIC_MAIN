@@ -17,7 +17,6 @@ export const postAppointment = catchAsyncErrors(async (req, res, next) => {
         department,
         doctor_firstName,
         doctor_lastName,
-        hasVisited,
         address
      } = req.body;
 
@@ -111,7 +110,6 @@ export const postAppointment = catchAsyncErrors(async (req, res, next) => {
             firstName: doctor_firstName,
             lastName: doctor_lastName,
         },
-        hasVisited,
         address,
         doctorId,
         patientId
@@ -149,6 +147,36 @@ export const getDoctorAppointments = catchAsyncErrors(async (req, res, next) => 
     });
 });
 
+// Doctor updates status of their own appointments
+export const doctorUpdateAppointmentStatus = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const doctorId = req.user._id;
+
+    const validStatuses = ["Pending", "Accepted", "Rejected"];
+    if (!status || !validStatuses.includes(status)) {
+        return next(new ErrorHandler("Invalid status. Use: Pending, Accepted, or Rejected", 400));
+    }
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+        return next(new ErrorHandler("Appointment not found", 404));
+    }
+    const docId = appointment.doctorId?._id || appointment.doctorId;
+    if (!docId || docId.toString() !== doctorId.toString()) {
+        return next(new ErrorHandler("Not authorized to update this appointment", 403));
+    }
+
+    appointment.status = status;
+    await appointment.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Appointment status updated successfully",
+        appointment,
+    });
+});
+
 export const updateAppointmentStatus = catchAsyncErrors(async (req, res, next) => {
     const {id} = req.params;
     let appointment = await Appointment.findById(id);
@@ -177,6 +205,24 @@ export const deleteAppointment = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
         success: true,
         message: "Appointment Deleted successfully",
+    });
+});
+
+// Patient cancels their own appointment
+export const patientCancelAppointment = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    const patientId = req.user._id;
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+        return next(new ErrorHandler("Appointment not found", 404));
+    }
+    if (appointment.patientId.toString() !== patientId.toString()) {
+        return next(new ErrorHandler("Not authorized to cancel this appointment", 403));
+    }
+    await Appointment.findByIdAndDelete(id);
+    res.status(200).json({
+        success: true,
+        message: "Appointment cancelled successfully",
     });
 });
 
@@ -252,24 +298,29 @@ export const rescheduleAppointment = catchAsyncErrors(async (req, res, next) => 
 export const addAppointmentNotes = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
     const { appointmentNotes, prescription } = req.body;
+    const doctorId = req.user._id;
 
     if (!appointmentNotes && !prescription) {
         return next(new ErrorHandler("Please provide notes or prescription", 400));
     }
 
-    const appointment = await Appointment.findByIdAndUpdate(
-        id,
-        { appointmentNotes, prescription, status: "Accepted" },
-        { new: true, runValidators: true }
-    );
-
+    const appointment = await Appointment.findById(id);
     if (!appointment) {
         return next(new ErrorHandler("Appointment not found", 404));
     }
+    if (appointment.doctorId.toString() !== doctorId.toString()) {
+        return next(new ErrorHandler("Not authorized to add notes to this appointment", 403));
+    }
+
+    const updates = { status: "Accepted" };
+    if (appointmentNotes !== undefined) updates.appointmentNotes = appointmentNotes;
+    if (prescription !== undefined) updates.prescription = prescription;
+
+    const updated = await Appointment.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
 
     res.status(200).json({
         success: true,
         message: "Notes added successfully",
-        appointment,
+        appointment: updated,
     });
 });

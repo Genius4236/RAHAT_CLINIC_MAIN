@@ -3,6 +3,7 @@ import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/errorMiddleware.js";
 import { Payment } from "../models/paymentSchema.js";
 import { Appointment } from "../models/appointmentSchema.js";
+import { instance } from "../config/razorpay.js";
 
 export const createPaymentOrder = catchAsyncErrors(async (req, res, next) => {
     const { appointmentId, amount } = req.body;
@@ -16,17 +17,36 @@ export const createPaymentOrder = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Appointment not found", 404));
     }
 
+    if (appointment.patientId.toString() !== req.user._id.toString()) {
+        return next(new ErrorHandler("Not authorized to pay for this appointment", 403));
+    }
+
+    if (!instance) {
+        return next(new ErrorHandler("Payment gateway is not configured", 503));
+    }
+
+    const razorpayOrder = await instance.orders.create({
+        amount: Math.round(Number(amount) * 100),
+        currency: "INR",
+    });
+
     const payment = await Payment.create({
         appointmentId,
         patientId: req.user._id,
-        amount,
+        amount: Number(amount),
         status: "Pending",
+        razorpayOrderId: razorpayOrder.id,
     });
 
     res.status(201).json({
         success: true,
         message: "Payment order created",
         payment,
+        order: {
+            id: razorpayOrder.id,
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+        },
     });
 });
 
@@ -69,12 +89,9 @@ export const verifyPayment = catchAsyncErrors(async (req, res, next) => {
 
     await payment.save();
 
-    // Update appointment status if needed
-    if (appointmentId) {
-        await Appointment.findByIdAndUpdate(appointmentId, {
-            paymentStatus: "Completed",
-        });
-    }
+    await Appointment.findByIdAndUpdate(payment.appointmentId, {
+        paymentStatus: "Completed",
+    });
 
     res.status(200).json({
         success: true,
@@ -150,6 +167,31 @@ export const refundPayment = catchAsyncErrors(async (req, res, next) => {
         success: true,
         message: "Payment refunded successfully",
         payment,
+    });
+});
+
+export const getAdminPayments = catchAsyncErrors(async (req, res, next) => {
+    const { page = 1, limit = 20, status } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+
+    const payments = await Payment.find(filter)
+        .populate("appointmentId", "firstName lastName appointment_date department")
+        .populate("patientId", "firstName lastName email")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit));
+
+    const total = await Payment.countDocuments(filter);
+
+    res.status(200).json({
+        success: true,
+        payments,
+        pagination: {
+            total,
+            pages: Math.ceil(total / limit),
+            currentPage: parseInt(page),
+        },
     });
 });
 
