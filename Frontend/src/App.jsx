@@ -5,8 +5,14 @@ import Register from './pages/Register'
 import BookAppointment from './pages/BookAppointment'
 import Contact from './pages/Contact'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminMessages from './pages/AdminMessages'
+import PatientDashboard from './pages/PatientDashboard'
+import DoctorDashboard from './pages/DoctorDashboard'
+import UserProfile from './pages/UserProfile'
 import Payment from './pages/Payment'
 import PaymentSuccess from './pages/PaymentSuccess'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import { useAuth } from './context/AuthContext'
 import { api } from './api'
 import Loading from './Components/Loading'
@@ -22,6 +28,8 @@ function App() {
         await api.logoutAdmin()
       } else if (userRole === 'Patient') {
         await api.logoutPatient()
+      } else if (userRole === 'Doctor') {
+        await api.logoutDoctor()
       }
       await logout()
       navigate('/')
@@ -44,7 +52,11 @@ function App() {
             <Link to="/">Home</Link>
             <Link to="/book">Book Appointment</Link>
             <Link to="/contact">Contact</Link>
-            <Link to="/admin">Admin</Link>
+            {isLoggedIn && userRole === 'Admin' && <Link to="/admin">Admin</Link>}
+            {isLoggedIn && userRole === 'Admin' && <Link to="/admin/messages">Messages</Link>}
+            {isLoggedIn && userRole === 'Patient' && <Link to="/patient-dashboard">Dashboard</Link>}
+            {isLoggedIn && userRole === 'Patient' && <Link to="/profile">Profile</Link>}
+            {isLoggedIn && userRole === 'Doctor' && <Link to="/doctor-dashboard">Dashboard</Link>}
             <Link to="/pay">Pay</Link>
             {isLoggedIn ? (
               <>
@@ -71,9 +83,15 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/book" element={<BookAppointment />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/messages" element={<AdminMessages />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/patient-dashboard" element={<PatientDashboard />} />
+          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
           <Route path="/pay" element={<Payment />} />
           <Route path="/paymentSuccess" element={<PaymentSuccess />} />
         </Routes>

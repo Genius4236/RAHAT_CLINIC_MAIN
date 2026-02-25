@@ -98,9 +98,16 @@ export default function Login() {
           </Button>
         </form>
 
-        <p style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          Don't have an account? <Link to="/register">Register</Link>
-        </p>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <p style={{ marginBottom: '1rem' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
+              Forgot password?
+            </Link>
+          </p>
+          <p>
+            Don't have an account? <Link to="/register">Register</Link>
+          </p>
+        </div>
       </div>
     </div>
   )

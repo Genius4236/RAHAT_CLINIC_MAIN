@@ -11,7 +11,4 @@ npm install
 npm i axios react-icons react-multi-carousel react-router-dom react-toastify
 
 
-install dependences for Dashboard
-npm create vite@latest
-npm install
-npm i axios react-icons react-toastify react-router-dom
+

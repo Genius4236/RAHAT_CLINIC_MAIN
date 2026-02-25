@@ -23,19 +23,23 @@ const appointmentSchema = new mongoose.Schema({
             minLength: [10, "Phone Number Must contain  10 character!"],
             maxLength: [10, "Phone Number Must contain  10 character!"],
             },
-                dob:{
-                    type:Date,
-                    required:[true, "Date of Birth is required"],
-                },
-                gender:{
-                    type:String,
-                    required: true,
-                    enum: ["Male", "Female"],
-                },
-                appointment_date:{
-                    type:String,
-                    required: true, 
-                },
+        dob:{
+            type:Date,
+            required:[true, "Date of Birth is required"],
+        },
+        gender:{
+            type:String,
+            required: true,
+            enum: ["Male", "Female"],
+        },
+        appointment_date:{  // YYYY-MM-DD format (date only)
+            type:String,
+            required: true, 
+        },
+        appointment_time:{  // HH:mm format (time only)
+            type: String,
+            required:true,
+        },
                 department:{
                     type:String,
                     required: true, 
@@ -68,8 +72,27 @@ const appointmentSchema = new mongoose.Schema({
                 },
                 status: {
                     type: String,
-                    enum: ["Pending", "Accepted", "Rejected",],
+                    enum: ["Pending", "Accepted", "Rejected"],
                     default: "Pending",
+                },
+                paymentStatus: {
+                    type: String,
+                    enum: ["Pending", "Completed", "Failed"],
+                    default: "Pending",
+                },
+                appointmentNotes: {
+                    type: String,
+                },
+                prescription: {
+                    type: String,
+                },
+                createdAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+                rescheduledFrom: {
+                    type: mongoose.Schema.ObjectId,
+                    ref: "Appointment",
                 },
 });
 

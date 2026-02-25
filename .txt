@@ -1,0 +1,1 @@
+In the admin dashboard Add a feature In Which The admin can add the PDF files or the different files With respect to the patient ID The patient can access Direct with there login 

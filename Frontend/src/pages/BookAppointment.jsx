@@ -7,8 +7,11 @@ export default function BookAppointment() {
   const [patient, setPatient] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [availabilityLoading, setAvailabilityLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [availability, setAvailability] = useState([])
+  const [selectedDoctor, setSelectedDoctor] = useState(null)
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -17,6 +20,7 @@ export default function BookAppointment() {
     dob: '',
     gender: 'Male',
     appointment_date: '',
+    appointment_time: '',
     department: '',
     doctor_firstName: '',
     doctor_lastName: '',
@@ -48,18 +52,42 @@ export default function BookAppointment() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
     setForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }))
+    // Load availability when date changes (use new value since state is async)
+    if (name === 'appointment_date' && selectedDoctor && value) {
+      loadAvailability(selectedDoctor._id, value)
+    }
   }
 
   const handleDoctorSelect = (e) => {
     const id = e.target.value
     const doc = doctors.find((d) => d._id === id)
     if (doc) {
+      setSelectedDoctor(doc)
       setForm((f) => ({
         ...f,
         doctor_firstName: doc.firstName,
         doctor_lastName: doc.lastName,
         department: doc.doctorDepartment || '',
       }))
+      // Load availability if date is already selected
+      if (form.appointment_date) {
+        loadAvailability(id, form.appointment_date)
+      }
+    }
+  }
+
+  const loadAvailability = async (doctorId = selectedDoctor?._id, date = form.appointment_date) => {
+    if (!doctorId || !date) return
+    
+    setAvailabilityLoading(true)
+    try {
+      const res = await api.getAvailableSlots(doctorId, date)
+      setAvailability(res.slots || [])
+    } catch (err) {
+      console.log('No availability data:', err.message)
+      setAvailability([])
+    } finally {
+      setAvailabilityLoading(false)
     }
   }
 
@@ -69,6 +97,13 @@ export default function BookAppointment() {
       setError('Please log in to book an appointment.')
       return
     }
+
+    // NEW VALIDATION CHECK
+    if (!form.appointment_time) {
+      setError('Please select an available appointment time.')
+      return
+    }
+
     setError('')
     setSuccess(false)
     setSubmitLoading(true)
@@ -178,6 +213,40 @@ export default function BookAppointment() {
               <input name="department" value={form.department} onChange={handleChange} readOnly placeholder="From doctor" />
             </div>
           </div>
+
+          {selectedDoctor && form.appointment_date && (
+            <div className="form-group">
+              <label>Available Time Slots</label>
+              {availabilityLoading ? (
+                <p style={{ color: 'var(--color-muted)' }}>Loading available slots…</p>
+              ) : availability.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem' }}>
+                  {availability.map((slot) => (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, appointment_time: slot.time }))}
+                      style={{
+                        padding: '0.5rem',
+                        borderRadius: 'var(--radius)',
+                        border: '1px solid var(--color-border)',
+                        background: form.appointment_time === slot.time ? 'var(--color-primary)' : 'var(--color-surface)',
+                        color: form.appointment_time === slot.time ? 'white' : 'inherit',
+                        cursor: slot.available ? 'pointer' : 'not-allowed',
+                        opacity: slot.available ? 1 : 0.5,
+                        fontWeight: form.appointment_time === slot.time ? 600 : 400,
+                      }}
+                      disabled={!slot.available}
+                    >
+                      {slot.time}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: 'var(--color-muted)' }}>No available slots for this date</p>
+              )}
+            </div>
+          )}
           <div className="form-group">
             <label>Address</label>
             <input name="address" value={form.address} onChange={handleChange} required placeholder="Full address" />

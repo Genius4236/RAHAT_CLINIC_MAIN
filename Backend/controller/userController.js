@@ -1,8 +1,10 @@
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/errorMiddleware.js";
 import { User } from "../models/userSchema.js";
+import { PasswordReset } from "../models/passwordResetSchema.js";
 import {generateToken} from "../utils/jwtToken.js";
 import cloudinary from "cloudinary";
+import crypto from "crypto";
 
 export const patientRegister = catchAsyncErrors(async(req,res,next)=>{
     const {firstName, lastName, email, phone, password, gender, dob, role} = req.body;
@@ -107,6 +109,18 @@ export const logoutPatient = catchAsyncErrors(async(req, res, next) => {
     });
 });
 
+export const logoutDoctor = catchAsyncErrors(async(req, res, next) => {
+    res.status(200).cookie("doctorToken", "",{
+        httpOnly: true,
+        expires: new Date(Date.now()),
+        secure: true,
+        sameSite: "None",
+    }).json({
+        success: true,
+        message: "Doctor Logout Successfully!",
+    });
+});
+
 export const addNewDoctor = catchAsyncErrors(async(req, res, next) => {
     if(!req.files || Object.keys(req.files).length === 0) {
         return next(new ErrorHandler("Doctor Avatar Required!", 400));
@@ -139,5 +153,185 @@ export const addNewDoctor = catchAsyncErrors(async(req, res, next) => {
         success: true,
         message: "New Doctor Added Successfully!",
         doctor,
+    });
+});
+
+export const requestPasswordReset = catchAsyncErrors(async(req, res, next) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return next(new ErrorHandler("Please provide email", 400));
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return next(new ErrorHandler("User not found with this email", 404));
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpiry = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+
+    // Save reset token to database
+    await PasswordReset.create({
+        userId: user._id,
+        resetToken: crypto.createHash("sha256").update(resetToken).digest("hex"),
+        resetTokenExpiry,
+    });
+
+    // In production, send email with reset link
+    const resetUrl = `${process.env.FRONTEND_URL}reset-password/${resetToken}`;
+    
+    // For now, we'll just return the token (in production, email it)
+    console.log(`Password Reset URL: ${resetUrl}`);
+
+    res.status(200).json({
+        success: true,
+        message: "Password reset token sent to email",
+        // Note: In production, don't send token in response. Send via email instead.
+        // resetToken: resetToken // Remove this in production
+    });
+});
+
+export const verifyResetToken = catchAsyncErrors(async(req, res, next) => {
+    const { token } = req.body;
+
+    if (!token) {
+        return next(new ErrorHandler("Please provide reset token", 400));
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const resetRecord = await PasswordReset.findOne({
+        resetToken: hashedToken,
+        resetTokenExpiry: { $gt: Date.now() },
+        isUsed: false,
+    });
+
+    if (!resetRecord) {
+        return next(new ErrorHandler("Invalid or expired reset token", 400));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Token is valid",
+        isValid: true,
+    });
+});
+
+export const resetPassword = catchAsyncErrors(async(req, res, next) => {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token || !newPassword || !confirmPassword) {
+        return next(new ErrorHandler("Please provide all required fields", 400));
+    }
+
+    if (newPassword !== confirmPassword) {
+        return next(new ErrorHandler("Passwords do not match", 400));
+    }
+
+    if (newPassword.length < 8) {
+        return next(new ErrorHandler("Password must be at least 8 characters", 400));
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const resetRecord = await PasswordReset.findOne({
+        resetToken: hashedToken,
+        resetTokenExpiry: { $gt: Date.now() },
+        isUsed: false,
+    });
+
+    if (!resetRecord) {
+        return next(new ErrorHandler("Invalid or expired reset token", 400));
+    }
+
+    const user = await User.findById(resetRecord.userId);
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    // Mark reset token as used
+    resetRecord.isUsed = true;
+    await resetRecord.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Password reset successfully",
+    });
+});
+
+export const changePassword = catchAsyncErrors(async(req, res, next) => {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user._id;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        return next(new ErrorHandler("Please provide all required fields", 400));
+    }
+
+    if (newPassword !== confirmPassword) {
+        return next(new ErrorHandler("New passwords do not match", 400));
+    }
+
+    if (newPassword.length < 8) {
+        return next(new ErrorHandler("Password must be at least 8 characters", 400));
+    }
+
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    const isPasswordMatched = await user.comparePassword(oldPassword);
+    if (!isPasswordMatched) {
+        return next(new ErrorHandler("Old password is incorrect", 400));
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Password changed successfully",
+    });
+});
+
+export const updateUserProfile = catchAsyncErrors(async(req, res, next) => {
+    const { firstName, lastName, email, phone, gender, dob, address } = req.body;
+    const userId = req.user._id;
+
+    if (!firstName || !lastName || !email || !phone) {
+        return next(new ErrorHandler("Please provide required fields", 400));
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    // Check if email is taken by another user
+    if (email !== user.email) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return next(new ErrorHandler("Email already in use", 400));
+        }
+    }
+
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.email = email;
+    user.phone = phone;
+    if (gender) user.gender = gender;
+    if (dob) user.dob = dob;
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Profile updated successfully",
+        user,
     });
 });
