@@ -1,4 +1,5 @@
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -21,6 +22,16 @@ import './App.css'
 function App() {
   const navigate = useNavigate()
   const { isLoggedIn, userRole, loading, logout } = useAuth()
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
+  }
 
   const handleLogout = async () => {
     try {
@@ -47,6 +58,8 @@ function App() {
     <>
       <header className="header">
         <div className="container header-inner">
+          <img src="/LOGO1.png" alt="Rahat Clinic Logo" className="Img-logo" />
+
           <Link to="/" className="logo">Rahat Clinic</Link>
           <nav className="nav">
             <Link to="/">Home</Link>
@@ -57,13 +70,14 @@ function App() {
             {isLoggedIn && userRole === 'Patient' && <Link to="/patient-dashboard">Dashboard</Link>}
             {isLoggedIn && userRole === 'Patient' && <Link to="/profile">Profile</Link>}
             {isLoggedIn && userRole === 'Doctor' && <Link to="/doctor-dashboard">Dashboard</Link>}
-            <Link to="/pay">Pay</Link>
+            {isLoggedIn && userRole === 'patient' && <Link to="/pay">pay</Link>}
+            {/* <Link to="/pay">Pay</Link> */}
             {isLoggedIn ? (
               <>
                 <span style={{ color: 'var(--color-muted)' }}>({userRole})</span>
-                <button 
-                  onClick={handleLogout} 
-                  className="nav-btn" 
+                <button
+                  onClick={handleLogout}
+                  className="nav-btn"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
                 >
                   Logout
@@ -75,6 +89,9 @@ function App() {
                 <Link to="/register" className="nav-btn primary">Register</Link>
               </>
             )}
+            <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
           </nav>
         </div>
       </header>

@@ -32,6 +32,7 @@ export const api = {
 
   // Patient
   getPatient: () => axiosInstance.get('/user/patient/me'),
+  getAllPatients: () => axiosInstance.get('/user/patients'),
 
   // Doctors
   getDoctors: () => axiosInstance.get('/user/doctors'),

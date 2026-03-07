@@ -245,6 +245,9 @@ export default function DoctorDashboard() {
                     <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
                       {a.department} • {new Date(a.appointment_date).toLocaleDateString()} at {a.appointment_time}
                     </div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
+                      Payment: <strong style={{ color: a.paymentStatus === 'Completed' ? 'var(--color-success, #22c55e)' : 'var(--color-text)' }}>{a.paymentStatus === 'Completed' ? 'Successful' : a.paymentStatus || 'Pending'}</strong>
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <label style={{ fontSize: '0.9rem' }}>Status:</label>
                       <select

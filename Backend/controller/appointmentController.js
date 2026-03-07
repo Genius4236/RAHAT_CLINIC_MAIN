@@ -1,8 +1,14 @@
-import {catchAsyncErrors} from "../middlewares/catchAsyncErrors.js";
+import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/errorMiddleware.js";
-import {Appointment} from "../models/appointmentSchema.js";
-import {User} from "../models/userSchema.js";
-import {Availability} from "../models/availabilitySchema.js";
+import { Appointment } from "../models/appointmentSchema.js";
+import { User } from "../models/userSchema.js";
+import { Availability } from "../models/availabilitySchema.js";
+import {
+    sendAppointmentConfirmation,
+    sendAppointmentStatusUpdate,
+    sendAppointmentReschedule,
+    sendAppointmentReport
+} from "../utils/whatsappService.js";
 
 export const postAppointment = catchAsyncErrors(async (req, res, next) => {
     const {
@@ -18,14 +24,14 @@ export const postAppointment = catchAsyncErrors(async (req, res, next) => {
         doctor_firstName,
         doctor_lastName,
         address
-     } = req.body;
+    } = req.body;
 
-     // Validate appointment_time is provided
-     if (!appointment_time) {
+    // Validate appointment_time is provided
+    if (!appointment_time) {
         return next(new ErrorHandler("Please select a time slot", 400));
-     }
+    }
 
-     if(
+    if (
         !firstName ||
         !lastName ||
         !email ||
@@ -37,66 +43,66 @@ export const postAppointment = catchAsyncErrors(async (req, res, next) => {
         !doctor_firstName ||
         !doctor_lastName ||
         !address ||
-        !appointment_time){
+        !appointment_time) {
         return next(new ErrorHandler("Please fill all the fields", 400));
-        }
+    }
 
-        // Validate appointment date is not in the past
-        const appointmentDate = new Date(appointment_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (appointmentDate < today) {
-            return next(new ErrorHandler("Appointment date cannot be in the past", 400));
-        }
+    // Validate appointment date is not in the past
+    const appointmentDate = new Date(appointment_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (appointmentDate < today) {
+        return next(new ErrorHandler("Appointment date cannot be in the past", 400));
+    }
 
-        const isConflict = await User.find({
-            firstName: doctor_firstName,
-            lastName: doctor_lastName,
-            role: "Doctor",
-            doctorDepartment: department,
-        });
-        if (isConflict.length === 0) {
-            return next(new ErrorHandler("Doctor not found", 404));
-        }
-        if (isConflict.length > 1) {
-            return next(new ErrorHandler("Doctor Conflict! Please Contact Through Email or Phone!", 404));
-        }
-        const doctorId = isConflict[0]._id;
-        const patientId = req.user._id;
+    const isConflict = await User.find({
+        firstName: doctor_firstName,
+        lastName: doctor_lastName,
+        role: "Doctor",
+        doctorDepartment: department,
+    });
+    if (isConflict.length === 0) {
+        return next(new ErrorHandler("Doctor not found", 404));
+    }
+    if (isConflict.length > 1) {
+        return next(new ErrorHandler("Doctor Conflict! Please Contact Through Email or Phone!", 404));
+    }
+    const doctorId = isConflict[0]._id;
+    const patientId = req.user._id;
 
-        // Check for duplicate appointments on same date+time with same doctor
-        const existingAppointment = await Appointment.findOne({
-            doctorId: doctorId,
-            appointment_date: appointment_date,
-            appointment_time: appointment_time,
-            status: { $ne: "Rejected" },
-        });
-        if (existingAppointment) {
-            return next(new ErrorHandler("Doctor already has an appointment at this time. Please choose a different date/time", 409));
-        }
+    // Check for duplicate appointments on same date+time with same doctor
+    const existingAppointment = await Appointment.findOne({
+        doctorId: doctorId,
+        appointment_date: appointment_date,
+        appointment_time: appointment_time,
+        status: { $ne: "Rejected" },
+    });
+    if (existingAppointment) {
+        return next(new ErrorHandler("Doctor already has an appointment at this time. Please choose a different date/time", 409));
+    }
 
-        // Check doctor availability (date-specific first, then weekly)
-        const appointmentDateObj = new Date(appointment_date);
-        const dateStr = appointment_date.includes("T") ? appointment_date.split("T")[0] : appointment_date;
-        const dayOfWeek = appointmentDateObj.toLocaleDateString("en-US", { weekday: "long" });
+    // Check doctor availability (date-specific first, then weekly)
+    const appointmentDateObj = new Date(appointment_date);
+    const dateStr = appointment_date.includes("T") ? appointment_date.split("T")[0] : appointment_date;
+    const dayOfWeek = appointmentDateObj.toLocaleDateString("en-US", { weekday: "long" });
 
-        let availability = await Availability.findOne({
+    let availability = await Availability.findOne({
+        doctorId,
+        date: dateStr,
+        isActive: true,
+    });
+    if (!availability) {
+        availability = await Availability.findOne({
             doctorId,
-            date: dateStr,
+            dayOfWeek,
             isActive: true,
         });
-        if (!availability) {
-            availability = await Availability.findOne({
-                doctorId,
-                dayOfWeek,
-                isActive: true,
-            });
-        }
-        if (!availability) {
-            return next(new ErrorHandler(`Doctor is not available on this date`, 400));
-        }
+    }
+    if (!availability) {
+        return next(new ErrorHandler(`Doctor is not available on this date`, 400));
+    }
 
-        const appointment = await Appointment.create({
+    const appointment = await Appointment.create({
         firstName,
         lastName,
         email,
@@ -106,18 +112,22 @@ export const postAppointment = catchAsyncErrors(async (req, res, next) => {
         appointment_date: dateStr,
         appointment_time,
         department,
-        doctor:{
+        doctor: {
             firstName: doctor_firstName,
             lastName: doctor_lastName,
         },
         address,
         doctorId,
         patientId
-        });
-        res.status(200).json({
-            success: true,
-            message: "Appointment Sent Successfully",
-        });
+    });
+
+    // Send WhatsApp confirmation
+    await sendAppointmentConfirmation(appointment);
+
+    res.status(200).json({
+        success: true,
+        message: "Appointment Sent Successfully",
+    });
 });
 
 export const getAllAppointments = catchAsyncErrors(async (req, res, next) => {
@@ -170,6 +180,9 @@ export const doctorUpdateAppointmentStatus = catchAsyncErrors(async (req, res, n
     appointment.status = status;
     await appointment.save();
 
+    // Send WhatsApp status update
+    await sendAppointmentStatusUpdate(appointment);
+
     res.status(200).json({
         success: true,
         message: "Appointment status updated successfully",
@@ -178,7 +191,7 @@ export const doctorUpdateAppointmentStatus = catchAsyncErrors(async (req, res, n
 });
 
 export const updateAppointmentStatus = catchAsyncErrors(async (req, res, next) => {
-    const {id} = req.params;
+    const { id } = req.params;
     let appointment = await Appointment.findById(id);
     if (!appointment) {
         return next(new ErrorHandler("Appointment not found", 404));
@@ -188,6 +201,12 @@ export const updateAppointmentStatus = catchAsyncErrors(async (req, res, next) =
         runValidators: true,
         useFindAndModify: false,
     });
+
+    // Send WhatsApp status update if status was changed
+    if (req.body.status) {
+        await sendAppointmentStatusUpdate(appointment);
+    }
+
     res.status(200).json({
         success: true,
         message: "Appointment status updated successfully",
@@ -196,7 +215,7 @@ export const updateAppointmentStatus = catchAsyncErrors(async (req, res, next) =
 });
 
 export const deleteAppointment = catchAsyncErrors(async (req, res, next) => {
-    const {id} = req.params;
+    const { id } = req.params;
     const appointment = await Appointment.findById(id);
     if (!appointment) {
         return next(new ErrorHandler("Appointment not found", 404));
@@ -288,6 +307,9 @@ export const rescheduleAppointment = catchAsyncErrors(async (req, res, next) => 
     appointment.status = "Pending"; // Reset status for rescheduled appointment
     await appointment.save();
 
+    // Send WhatsApp reschedule update
+    await sendAppointmentReschedule(appointment);
+
     res.status(200).json({
         success: true,
         message: "Appointment rescheduled successfully",
@@ -317,6 +339,9 @@ export const addAppointmentNotes = catchAsyncErrors(async (req, res, next) => {
     if (prescription !== undefined) updates.prescription = prescription;
 
     const updated = await Appointment.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+
+    // Send WhatsApp report/prescription manually since it's added
+    await sendAppointmentReport(updated);
 
     res.status(200).json({
         success: true,

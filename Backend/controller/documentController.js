@@ -2,6 +2,8 @@ import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/errorMiddleware.js";
 import { Document } from "../models/documentSchema.js";
 import { User } from "../models/userSchema.js";
+import cloudinary from "cloudinary";
+import { sendWhatsAppMessage } from "../utils/whatsappService.js";
 
 // Upload a document for a patient (express-fileupload: req.files.document or req.files.file)
 export const uploadDocument = catchAsyncErrors(async (req, res, next) => {
@@ -21,17 +23,38 @@ export const uploadDocument = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("No file uploaded", 400));
     }
 
+    let cloudinaryResponse;
+    try {
+        const resourceType = file.mimetype === "application/pdf" ? "raw" : "auto";
+        cloudinaryResponse = await cloudinary.uploader.upload(file.tempFilePath, {
+            resource_type: resourceType,
+        });
+
+        if (!cloudinaryResponse || cloudinaryResponse.error) {
+            console.error("Cloudinary error:", cloudinaryResponse?.error);
+            return next(new ErrorHandler("Failed to upload document to internet storage", 500));
+        }
+    } catch (error) {
+        console.error("Cloudinary upload exception:", error);
+        return next(new ErrorHandler("Error uploading document to internet storage", 500));
+    }
+
     const document = await Document.create({
         patientId,
         title,
         description,
         documentType: documentType || "Other",
         fileName: file.name,
-        filePath: file.tempFilePath || file.name,
+        filePath: cloudinaryResponse.secure_url,
         fileType: file.mimetype,
         fileSize: file.size,
         uploadedBy: req.user._id,
     });
+
+    if (patient.phone) {
+        const message = `Hello ${patient.firstName} ${patient.lastName},\n\nA new document titled "${title}" has been uploaded to your profile.\n\nDescription: ${description || "N/A"}\nType: ${documentType || "Other"}\n\nThank you,\nRahat Clinic`;
+        await sendWhatsAppMessage(patient.phone, message, cloudinaryResponse.secure_url);
+    }
 
     res.status(201).json({
         success: true,

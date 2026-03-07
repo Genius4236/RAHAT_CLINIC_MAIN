@@ -1,15 +1,16 @@
 import express from "express";
-import { getAllDoctors, getUserDetails, patientRegister, logoutAdmin, logoutPatient, logoutDoctor, addNewDoctor, requestPasswordReset, verifyResetToken, resetPassword, changePassword, updateUserProfile} from "../controller/userController.js";
+import { getAllDoctors, getAllPatients, getUserDetails, patientRegister, logoutAdmin, logoutPatient, logoutDoctor, addNewDoctor, requestPasswordReset, verifyResetToken, resetPassword, changePassword, updateUserProfile } from "../controller/userController.js";
 import { login } from "../controller/userController.js";
 import { addNewAdmin } from "../controller/userController.js";
-import {isAdminAuthenticated, isPatientAuthenticated, isDoctorAuthenticated, isAuthenticated} from "../middlewares/auth.js";
+import { isAdminAuthenticated, isPatientAuthenticated, isDoctorAuthenticated, isAuthenticated } from "../middlewares/auth.js";
 
-const router =express.Router();
+const router = express.Router();
 
 router.post("/patient/register", patientRegister);
 router.post("/login", login);
 router.post("/admin/addnew", isAdminAuthenticated, addNewAdmin);
 router.get("/doctors", getAllDoctors);
+router.get("/patients", isAdminAuthenticated, getAllPatients);
 router.get("/admin/me", isAdminAuthenticated, getUserDetails);
 router.get("/patient/me", isPatientAuthenticated, getUserDetails);
 router.get("/doctor/me", isDoctorAuthenticated, getUserDetails);
