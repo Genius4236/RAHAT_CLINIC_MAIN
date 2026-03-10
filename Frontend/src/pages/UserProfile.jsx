@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { Container, Typography, Box, Grid, TextField, Button, MenuItem, Paper, Alert } from '@mui/material'
 
 export default function UserProfile() {
   const { user } = useAuth()
@@ -100,256 +101,131 @@ export default function UserProfile() {
 
   if (!user) {
     return (
-      <div className="page">
-        <div className="container">
-          <p>Please log in to view your profile.</p>
-        </div>
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <Typography>Please log in to view your profile.</Typography>
+      </Container>
     )
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 560, margin: '0 auto' }}>
-        <header style={{ marginBottom: '2rem' }}>
-          <h1 style={{ marginBottom: '0.25rem' }}>My Profile</h1>
-          <p style={{ color: 'var(--color-muted)' }}>View and manage your account information</p>
-        </header>
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          My Profile
+        </Typography>
+        <Typography color="text.secondary">
+          View and manage your account information
+        </Typography>
+      </Box>
 
-        {error && <p className="error-msg" style={{ marginBottom: '1rem' }}>{error}</p>}
-        {success && <p className="success-msg" style={{ marginBottom: '1rem' }}>{success}</p>}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
 
-        {!isEditing ? (
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
-            <div
-              style={{
-                padding: '1.5rem',
-                borderRadius: 'var(--radius)',
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--color-muted)', fontWeight: 500 }}>
-                    First Name
-                  </label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>
-                    {form.firstName}
-                  </p>
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--color-muted)', fontWeight: 500 }}>
-                    Last Name
-                  </label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>
-                    {form.lastName}
-                  </p>
-                </div>
-              </div>
-              <div style={{ marginTop: '1.5rem' }}>
-                <label style={{ fontSize: '0.85rem', color: 'var(--color-muted)', fontWeight: 500 }}>
-                  Email
-                </label>
-                <p style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>
-                  {form.email}
-                </p>
-              </div>
-              <div style={{ marginTop: '1.5rem' }}>
-                <label style={{ fontSize: '0.85rem', color: 'var(--color-muted)', fontWeight: 500 }}>
-                  Phone
-                </label>
-                <p style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>
-                  {form.phone}
-                </p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1.5rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--color-muted)', fontWeight: 500 }}>
-                    Gender
-                  </label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>
-                    {form.gender}
-                  </p>
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--color-muted)', fontWeight: 500 }}>
-                    Date of Birth
-                  </label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>
-                    {form.dob ? new Date(form.dob).toLocaleDateString() : 'Not provided'}
-                  </p>
-                </div>
-              </div>
-            </div>
+      {!isEditing ? (
+        <Box sx={{ display: 'grid', gap: 3 }}>
+          <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>First Name</Typography>
+                <Typography variant="h6" fontWeight={500}>{form.firstName}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>Last Name</Typography>
+                <Typography variant="h6" fontWeight={500}>{form.lastName}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>Email</Typography>
+                <Typography variant="h6" fontWeight={500}>{form.email}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>Phone</Typography>
+                <Typography variant="h6" fontWeight={500}>{form.phone}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>Gender</Typography>
+                <Typography variant="h6" fontWeight={500}>{form.gender}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>Date of Birth</Typography>
+                <Typography variant="h6" fontWeight={500}>{form.dob ? new Date(form.dob).toLocaleDateString() : 'Not provided'}</Typography>
+              </Grid>
+            </Grid>
+          </Paper>
 
-            <button
-              onClick={() => setIsEditing(true)}
-              className="btn btn-primary"
-              style={{ width: '100%' }}
-            >
-              Edit Profile
-            </button>
+          <Button variant="contained" color="primary" fullWidth size="large" onClick={() => setIsEditing(true)}>
+            Edit Profile
+          </Button>
 
-            <div
-              style={{
-                padding: '1.5rem',
-                borderRadius: 'var(--radius)',
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>Change Password</h3>
-              {!showChangePassword ? (
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => setShowChangePassword(true)}
-                >
-                  Change Password
-                </button>
-              ) : (
-                <form onSubmit={handleChangePassword} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-                  {passwordError && <p className="error-msg">{passwordError}</p>}
-                  {passwordSuccess && <p className="success-msg">{passwordSuccess}</p>}
-                  <div className="form-group">
-                    <label>Current Password *</label>
-                    <input
-                      type="password"
-                      name="oldPassword"
-                      value={passwordForm.oldPassword}
-                      onChange={handlePasswordChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>New Password *</label>
-                    <input
-                      type="password"
-                      name="newPassword"
-                      value={passwordForm.newPassword}
-                      onChange={handlePasswordChange}
-                      minLength={8}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Confirm New Password *</label>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      value={passwordForm.confirmPassword}
-                      onChange={handlePasswordChange}
-                      minLength={8}
-                      required
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button type="submit" className="btn btn-primary" disabled={passwordLoading}>
-                      {passwordLoading ? 'Updating…' : 'Update Password'}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline"
-                      onClick={() => {
-                        setShowChangePassword(false)
-                        setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' })
-                        setPasswordError('')
-                        setPasswordSuccess('')
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label>First Name *</label>
-                <input
-                  name="firstName"
-                  value={form.firstName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Last Name *</label>
-                <input
-                  name="lastName"
-                  value={form.lastName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+          <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>Change Password</Typography>
+            {!showChangePassword ? (
+              <Button variant="outlined" color="primary" onClick={() => setShowChangePassword(true)} sx={{ mt: 1 }}>
+                Change Password
+              </Button>
+            ) : (
+              <Box component="form" onSubmit={handleChangePassword} sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                {passwordError && <Alert severity="error">{passwordError}</Alert>}
+                {passwordSuccess && <Alert severity="success">{passwordSuccess}</Alert>}
 
-            <div className="form-group">
-              <label>Email *</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
+                <TextField fullWidth type="password" label="Current Password" name="oldPassword" value={passwordForm.oldPassword} onChange={handlePasswordChange} required />
+                <TextField fullWidth type="password" label="New Password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} required helperText="Minimum 8 characters" />
+                <TextField fullWidth type="password" label="Confirm New Password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} required />
 
-            <div className="form-group">
-              <label>Phone *</label>
-              <input
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                maxLength={10}
-                required
-              />
-            </div>
+                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                  <Button type="submit" variant="contained" color="primary" disabled={passwordLoading} sx={{ flex: 1 }}>
+                    {passwordLoading ? 'Updating…' : 'Update Password'}
+                  </Button>
+                  <Button variant="outlined" sx={{ flex: 1 }} onClick={() => {
+                    setShowChangePassword(false)
+                    setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' })
+                    setPasswordError('')
+                    setPasswordSuccess('')
+                  }}>
+                    Cancel
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Paper>
+        </Box>
+      ) : (
+        <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="First Name" name="firstName" value={form.firstName} onChange={handleChange} required />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Last Name" name="lastName" value={form.lastName} onChange={handleChange} required />
+              </Grid>
+            </Grid>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label>Gender</label>
-                <select name="gender" value={form.gender} onChange={handleChange}>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Date of Birth</label>
-                <input
-                  type="date"
-                  name="dob"
-                  value={form.dob}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
+            <TextField fullWidth type="email" label="Email" name="email" value={form.email} onChange={handleChange} required />
+            <TextField fullWidth label="Phone" name="phone" value={form.phone} onChange={handleChange} inputProps={{ maxLength: 10 }} required />
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-                disabled={loading}
-              >
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField select fullWidth label="Gender" name="gender" value={form.gender} onChange={handleChange}>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth type="date" label="Date of Birth" name="dob" value={form.dob} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              <Button type="submit" variant="contained" color="primary" size="large" sx={{ flex: 1 }} disabled={loading}>
                 {loading ? 'Saving…' : 'Save Changes'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                style={{ flex: 1 }}
-                onClick={() => setIsEditing(false)}
-              >
+              </Button>
+              <Button variant="outlined" size="large" sx={{ flex: 1 }} onClick={() => setIsEditing(false)}>
                 Cancel
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      )}
+    </Container>
   )
 }

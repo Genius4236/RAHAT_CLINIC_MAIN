@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
+import { Container, Typography, Box, Grid, TextField, Button, FormControl, InputLabel, Select, MenuItem, Paper, Alert, Link as MuiLink } from '@mui/material'
 
 export default function BookAppointment() {
   const [doctors, setDoctors] = useState([])
@@ -77,7 +78,7 @@ export default function BookAppointment() {
 
   const loadAvailability = async (doctorId = selectedDoctor?._id, date = form.appointment_date) => {
     if (!doctorId || !date) return
-    
+
     setAvailabilityLoading(true)
     try {
       const res = await api.getAvailableSlots(doctorId, date)
@@ -118,145 +119,132 @@ export default function BookAppointment() {
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="container">
-          <p>Loading…</p>
-        </div>
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <Typography>Loading…</Typography>
+      </Container>
     )
   }
 
   if (!patient) {
     return (
-      <div className="page">
-        <div className="container" style={{ maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
-          <h1>Book an appointment</h1>
-          <p style={{ color: 'var(--color-muted)', marginBottom: '1.5rem' }}>
-            You need to be logged in to book an appointment.
-          </p>
-          <Link to="/login" className="btn btn-primary">Log in</Link>
-          <span style={{ margin: '0 0.5rem' }} />
-          <Link to="/register" className="btn btn-outline">Register</Link>
-        </div>
-      </div>
+      <Container maxWidth="sm" sx={{ py: 12, textAlign: 'center' }}>
+        <Typography variant="h4" gutterBottom fontWeight="bold">Book an appointment</Typography>
+        <Typography color="text.secondary" sx={{ mb: 4 }}>
+          You need to be logged in to book an appointment.
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+          <Button component={Link} to="/login" variant="contained" color="primary">Log in</Button>
+          <Button component={Link} to="/register" variant="outlined" color="primary">Register</Button>
+        </Box>
+      </Container>
     )
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 560, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Book an appointment</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
+    <Container maxWidth="md" sx={{ py: 8 }}>
+      <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          Book an appointment
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
           Choose a doctor and time. We’ll confirm your booking.
-        </p>
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>First name</label>
-              <input name="firstName" value={form.firstName} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>Last name</label>
-              <input name="lastName" value={form.lastName} onChange={handleChange} required />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input name="email" type="email" value={form.email} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label>Phone</label>
-            <input name="phone" value={form.phone} onChange={handleChange} maxLength={10} required />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Date of birth</label>
-              <input name="dob" type="date" value={form.dob} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>Gender</label>
-              <select name="gender" value={form.gender} onChange={handleChange}>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Doctor</label>
-            <select
-              value={doctors.find((d) => d.firstName === form.doctor_firstName && d.lastName === form.doctor_lastName)?._id || ''}
-              onChange={handleDoctorSelect}
-              required
-            >
-              <option value="">Select a doctor</option>
-              {doctors.map((d) => (
-                <option key={d._id} value={d._id}>
-                  Dr. {d.firstName} {d.lastName} — {d.doctorDepartment || 'General'}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Appointment date</label>
-              <input
-                name="appointment_date"
-                type="date"
-                value={form.appointment_date}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Department</label>
-              <input name="department" value={form.department} onChange={handleChange} readOnly placeholder="From doctor" />
-            </div>
-          </div>
+        </Typography>
+
+        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 3 }}>Appointment request sent. We’ll confirm shortly.</Alert>}
+
+        <Box component="form" onSubmit={handleSubmit}>
+          <Typography variant="h6" sx={{ mb: 2, mt: 2 }} fontWeight="bold">Personal Details</Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="First name" name="firstName" value={form.firstName} onChange={handleChange} required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Last name" name="lastName" value={form.lastName} onChange={handleChange} required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Email" type="email" name="email" value={form.email} onChange={handleChange} required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Phone" name="phone" value={form.phone} onChange={handleChange} inputProps={{ maxLength: 10 }} required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Date of birth" type="date" name="dob" value={form.dob} onChange={handleChange} InputLabelProps={{ shrink: true }} required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel id="gender-label">Gender</InputLabel>
+                <Select labelId="gender-label" name="gender" value={form.gender} label="Gender" onChange={handleChange}>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Address" name="address" value={form.address} onChange={handleChange} required />
+            </Grid>
+          </Grid>
+
+          <Typography variant="h6" sx={{ mb: 2, mt: 4 }} fontWeight="bold">Appointment Details</Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel id="doctor-label">Doctor</InputLabel>
+                <Select
+                  labelId="doctor-label"
+                  label="Doctor"
+                  value={doctors.find((d) => d.firstName === form.doctor_firstName && d.lastName === form.doctor_lastName)?._id || ''}
+                  onChange={handleDoctorSelect}
+                >
+                  <MenuItem value=""><em>Select a doctor</em></MenuItem>
+                  {doctors.map((d) => (
+                    <MenuItem key={d._id} value={d._id}>
+                      Dr. {d.firstName} {d.lastName} — {d.doctorDepartment || 'General'}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Department" name="department" value={form.department} disabled InputLabelProps={{ shrink: true }} placeholder="From doctor" />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Appointment date" type="date" name="appointment_date" value={form.appointment_date} onChange={handleChange} InputLabelProps={{ shrink: true }} required />
+            </Grid>
+          </Grid>
 
           {selectedDoctor && form.appointment_date && (
-            <div className="form-group">
-              <label>Available Time Slots</label>
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Available Time Slots</Typography>
               {availabilityLoading ? (
-                <p style={{ color: 'var(--color-muted)' }}>Loading available slots…</p>
+                <Typography color="text.secondary">Loading available slots…</Typography>
               ) : availability.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem' }}>
+                <Grid container spacing={1}>
                   {availability.map((slot) => (
-                    <button
-                      key={slot.time}
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, appointment_time: slot.time }))}
-                      style={{
-                        padding: '0.5rem',
-                        borderRadius: 'var(--radius)',
-                        border: '1px solid var(--color-border)',
-                        background: form.appointment_time === slot.time ? 'var(--color-primary)' : 'var(--color-surface)',
-                        color: form.appointment_time === slot.time ? 'white' : 'inherit',
-                        cursor: slot.available ? 'pointer' : 'not-allowed',
-                        opacity: slot.available ? 1 : 0.5,
-                        fontWeight: form.appointment_time === slot.time ? 600 : 400,
-                      }}
-                      disabled={!slot.available}
-                    >
-                      {slot.time}
-                    </button>
+                    <Grid item key={slot.time}>
+                      <Button
+                        variant={form.appointment_time === slot.time ? "contained" : "outlined"}
+                        color={form.appointment_time === slot.time ? "primary" : "inherit"}
+                        disabled={!slot.available}
+                        onClick={() => setForm((f) => ({ ...f, appointment_time: slot.time }))}
+                        sx={{ minWidth: 80, textTransform: 'none' }}
+                      >
+                        {slot.time}
+                      </Button>
+                    </Grid>
                   ))}
-                </div>
+                </Grid>
               ) : (
-                <p style={{ color: 'var(--color-muted)' }}>No available slots for this date</p>
+                <Typography color="text.secondary">No available slots for this date</Typography>
               )}
-            </div>
+            </Box>
           )}
-          <div className="form-group">
-            <label>Address</label>
-            <input name="address" value={form.address} onChange={handleChange} required placeholder="Full address" />
-          </div>
-          {error && <p className="error-msg">{error}</p>}
-          {success && <p className="success-msg">Appointment request sent. We’ll confirm shortly.</p>}
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={submitLoading}>
+
+          <Button type="submit" variant="contained" color="primary" size="large" fullWidth sx={{ mt: 5, py: 1.5 }} disabled={submitLoading}>
             {submitLoading ? 'Submitting…' : 'Request appointment'}
-          </button>
-        </form>
-      </div>
-    </div>
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   )
 }

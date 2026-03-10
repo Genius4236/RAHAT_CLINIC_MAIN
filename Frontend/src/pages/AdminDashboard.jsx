@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import {
+  Container, Typography, Box, Grid, Card, CardContent, Button, TextField, Tabs, Tab, Select, MenuItem,
+  FormControl, InputLabel, CircularProgress, Paper, IconButton, Chip, Alert, Divider
+} from '@mui/material'
+import DeleteIcon from '@mui/icons-material/Delete'
+import PersonAddIcon from '@mui/icons-material/PersonAdd'
+import SupportAgentIcon from '@mui/icons-material/SupportAgent'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState(null)
@@ -34,7 +42,7 @@ export default function AdminDashboard() {
   const [doctorSubmitting, setDoctorSubmitting] = useState(false)
   const [doctorSuccess, setDoctorSuccess] = useState('')
   const [paymentStats, setPaymentStats] = useState(null)
-  const [adminTab, setAdminTab] = useState('overview')
+  const [adminTab, setAdminTab] = useState(0)
   const [payments, setPayments] = useState([])
   const [documents, setDocuments] = useState([])
   const [docForm, setDocForm] = useState({ patientId: '', title: '', description: '', documentType: 'Other' })
@@ -144,6 +152,7 @@ export default function AdminDashboard() {
   }
 
   const deleteAppointment = async (id) => {
+    if (!window.confirm('Delete this appointment?')) return
     try {
       await api.deleteAppointment(id)
       setAppointments((prev) => prev.filter((a) => a._id !== id))
@@ -207,392 +216,386 @@ export default function AdminDashboard() {
     }
   }
 
-  const patientsFromAppointments = [...new Map(
-    appointments
-      .filter((a) => a.patientId)
-      .map((a) => [a.patientId._id || a.patientId, a.patientId])
-  ).values()]
-
   if (loading) {
     return (
-      <div className="page">
-        <div className="container">
-          <p>Loading admin dashboard…</p>
-        </div>
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading admin dashboard…</Typography>
+      </Container>
     )
   }
 
   if (!admin) {
     return (
-      <div className="page">
-        <div className="container" style={{ maxWidth: 520, margin: '0 auto' }}>
-          <h1>Admin dashboard</h1>
-          <p style={{ color: 'var(--color-muted)' }}>{error || 'Not authorized.'}</p>
-        </div>
-      </div>
+      <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+        <Typography variant="h4" gutterBottom>Admin Dashboard</Typography>
+        <Typography color="error">{error || 'Not authorized.'}</Typography>
+      </Container>
     )
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ display: 'grid', gap: '2.5rem' }}>
-        <header>
-          <h1 style={{ marginBottom: '0.25rem' }}>Welcome, {admin.firstName}</h1>
-          <p style={{ color: 'var(--color-muted)' }}>Admin dashboard</p>
-        </header>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+          Welcome, {admin.firstName}
+        </Typography>
+        <Typography color="text.secondary">
+          Admin dashboard
+        </Typography>
+      </Box>
 
-        {error && <p className="error-msg">{error}</p>}
+      {error && <Typography color="error" sx={{ mb: 3 }}>{error}</Typography>}
 
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', borderBottom: '1px solid var(--color-border)' }}>
-          {['overview', 'payments', 'documents'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setAdminTab(tab)}
-              style={{
-                padding: '0.5rem 1rem',
-                background: adminTab === tab ? 'var(--color-primary)' : 'transparent',
-                color: adminTab === tab ? 'white' : 'inherit',
-                border: 'none',
-                cursor: 'pointer',
-                textTransform: 'capitalize',
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+        <Tabs value={adminTab} onChange={(e, val) => setAdminTab(val)}>
+          <Tab label="Overview" />
+          <Tab label="Payments" />
+          <Tab label="Documents" />
+        </Tabs>
+      </Box>
 
-        {adminTab === 'overview' && (
-          <>
-            {paymentStats && (
-              <section
-                style={{
-                  padding: '1rem',
-                  borderRadius: 'var(--radius)',
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
-                <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-                  Payment Stats
-                </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Total Revenue</div>
-                    <div style={{ fontWeight: 600, fontSize: '1.25rem' }}>₹{paymentStats.totalRevenue?.toFixed(2) ?? 0}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Transactions</div>
-                    <div style={{ fontWeight: 600, fontSize: '1.25rem' }}>{paymentStats.totalTransactions ?? 0}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Avg Transaction</div>
-                    <div style={{ fontWeight: 600, fontSize: '1.25rem' }}>₹{paymentStats.averageTransaction?.toFixed(2) ?? 0}</div>
-                  </div>
-                </div>
-              </section>
-            )}
+      {/* OVERVIEW TAB */}
+      {adminTab === 0 && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {paymentStats && (
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, bgcolor: 'background.default' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                Payment Stats
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={4}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Total Revenue</Typography>
+                    <Typography variant="h5" fontWeight="bold" color="primary.main">
+                      ₹{paymentStats.totalRevenue?.toFixed(2) ?? 0}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Transactions</Typography>
+                    <Typography variant="h5" fontWeight="bold">
+                      {paymentStats.totalTransactions ?? 0}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Avg Transaction</Typography>
+                    <Typography variant="h5" fontWeight="bold">
+                      ₹{paymentStats.averageTransaction?.toFixed(2) ?? 0}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
+          )}
 
-            <section>
-              <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Doctors</h2>
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {doctors.length === 0 && <p style={{ color: 'var(--color-muted)' }}>No doctors found.</p>}
-                {doctors.map((d) => (
-                  <div
-                    key={d._id}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: 'var(--radius)',
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '1rem',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 600 }}>
-                        Dr. {d.firstName} {d.lastName}
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                        {d.doctorDepartment || 'General'} • {d.email}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Appointments</h2>
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {appointments.length === 0 && <p style={{ color: 'var(--color-muted)' }}>No appointments yet.</p>}
-                {appointments.map((a) => (
-                  <div
-                    key={a._id}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: 'var(--radius)',
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 600 }}>
-                        {a.firstName} {a.lastName}{' '}
-                        <span style={{ color: 'var(--color-muted)', fontWeight: 400 }}>
-                          ({a.department})
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                        Doctor: {a.doctor?.firstName} {a.doctor?.lastName}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        className="btn btn-primary"
-                        type="button"
-                        onClick={() => deleteAppointment(a._id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-              <div>
-                <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Add admin</h2>
-                <form onSubmit={submitAdmin}>
-                  <div className="form-group">
-                    <label>First name</label>
-                    <input name="firstName" value={adminForm.firstName} onChange={handleAdminChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Last name</label>
-                    <input name="lastName" value={adminForm.lastName} onChange={handleAdminChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input name="email" type="email" value={adminForm.email} onChange={handleAdminChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Phone</label>
-                    <input name="phone" value={adminForm.phone} onChange={handleAdminChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Gender</label>
-                    <select name="gender" value={adminForm.gender} onChange={handleAdminChange}>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Date of birth</label>
-                    <input name="dob" type="date" value={adminForm.dob} onChange={handleAdminChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Password</label>
-                    <input name="password" type="password" value={adminForm.password} onChange={handleAdminChange} required />
-                  </div>
-                  {adminSuccess && <p className="success-msg">{adminSuccess}</p>}
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    style={{ width: '100%' }}
-                    disabled={adminSubmitting}
-                  >
-                    {adminSubmitting ? 'Adding…' : 'Add admin'}
-                  </button>
-                </form>
-              </div>
-
-              <div>
-                <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Add doctor</h2>
-                <form onSubmit={submitDoctor}>
-                  <div className="form-group">
-                    <label>First name</label>
-                    <input name="firstName" value={doctorForm.firstName} onChange={handleDoctorChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Last name</label>
-                    <input name="lastName" value={doctorForm.lastName} onChange={handleDoctorChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input name="email" type="email" value={doctorForm.email} onChange={handleDoctorChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Phone</label>
-                    <input name="phone" value={doctorForm.phone} onChange={handleDoctorChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Gender</label>
-                    <select name="gender" value={doctorForm.gender} onChange={handleDoctorChange}>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Date of birth</label>
-                    <input name="dob" type="date" value={doctorForm.dob} onChange={handleDoctorChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Department</label>
-                    <input
-                      name="doctorDepartment"
-                      value={doctorForm.doctorDepartment}
-                      onChange={handleDoctorChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Password</label>
-                    <input name="password" type="password" value={doctorForm.password} onChange={handleDoctorChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Doctor avatar</label>
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={(e) => setDoctorAvatar(e.target.files?.[0] || null)}
-                      required
-                    />
-                  </div>
-                  {doctorSuccess && <p className="success-msg">{doctorSuccess}</p>}
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    style={{ width: '100%' }}
-                    disabled={doctorSubmitting}
-                  >
-                    {doctorSubmitting ? 'Adding…' : 'Add doctor'}
-                  </button>
-                </form>
-              </div>
-            </section>
-          </>
-        )}
-
-        {adminTab === 'payments' && (
           <section>
-            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Payments</h2>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {payments.length === 0 && <p style={{ color: 'var(--color-muted)' }}>No payments found.</p>}
-              {payments.map((p) => (
-                <div key={p._id} style={{
-                  padding: '0.75rem 1rem',
-                  borderRadius: 'var(--radius)',
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'
-                }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>₹{p.amount} - {p.status}</div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                      Method: {p.paymentMethod} • Date: {new Date(p.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  {p.status === 'Completed' && (
-                    <button className="btn btn-primary" onClick={() => refundPayment(p._id)}>Refund</button>
-                  )}
-                </div>
+            <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+              Doctors
+            </Typography>
+            <Grid container spacing={2}>
+              {doctors.length === 0 && (
+                <Grid item xs={12}>
+                  <Typography color="text.secondary">No doctors found.</Typography>
+                </Grid>
+              )}
+              {doctors.map((d) => (
+                <Grid item xs={12} sm={6} md={4} key={d._id}>
+                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                        Dr. {d.firstName} {d.lastName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {d.doctorDepartment || 'General'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {d.email}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
               ))}
-            </div>
+            </Grid>
           </section>
-        )}
 
-        {adminTab === 'documents' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '2rem', alignItems: 'start' }}>
-            <section>
-              <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Documents</h2>
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {documents.length === 0 && <p style={{ color: 'var(--color-muted)' }}>No documents found.</p>}
-                {documents.map((d) => (
-                  <div key={d._id} style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius)',
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{d.title}</div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                        Patient: {d.patientId?.firstName} {d.patientId?.lastName} | Type: {d.documentType}
-                      </div>
-                    </div>
-                    <button className="btn btn-primary" onClick={() => deleteDocument(d._id)}>Delete</button>
-                  </div>
-                ))}
-              </div>
-            </section>
+          <section>
+            <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+              Appointments
+            </Typography>
+            <Grid container spacing={2}>
+              {appointments.length === 0 && (
+                <Grid item xs={12}>
+                  <Typography color="text.secondary">No appointments yet.</Typography>
+                </Grid>
+              )}
+              {appointments.map((a) => (
+                <Grid item xs={12} md={6} key={a._id}>
+                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {a.firstName} {a.lastName}{' '}
+                          <Typography component="span" variant="body2" color="text.secondary">
+                            ({a.department})
+                          </Typography>
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Doctor: Dr. {a.doctor?.firstName} {a.doctor?.lastName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(a.appointment_date).toLocaleDateString()} at {a.appointment_time}
+                        </Typography>
+                      </Box>
+                      <IconButton color="error" onClick={() => deleteAppointment(a._id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </section>
 
-            <section style={{ padding: '1.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)' }}>
-              <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Upload Document</h2>
-              <form onSubmit={submitDocument} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="form-group">
-                  <label>Patient</label>
-                  <select
-                    value={docForm.patientId}
-                    onChange={(e) => setDocForm({ ...docForm, patientId: e.target.value })}
-                    required
-                  >
-                    <option value="">Select a patient</option>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1 }}>
+                  <SupportAgentIcon color="primary" />
+                  <Typography variant="h6" fontWeight="bold">
+                    Add Admin
+                  </Typography>
+                </Box>
+                {adminSuccess && <Alert severity="success" sx={{ mb: 2 }}>{adminSuccess}</Alert>}
+                <Box component="form" onSubmit={submitAdmin} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="First Name" name="firstName" value={adminForm.firstName} onChange={handleAdminChange} required fullWidth />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Last Name" name="lastName" value={adminForm.lastName} onChange={handleAdminChange} required fullWidth />
+                    </Grid>
+                  </Grid>
+                  <TextField label="Email" name="email" type="email" value={adminForm.email} onChange={handleAdminChange} required fullWidth />
+                  <TextField label="Phone" name="phone" value={adminForm.phone} onChange={handleAdminChange} required fullWidth />
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Gender</InputLabel>
+                        <Select name="gender" value={adminForm.gender} onChange={handleAdminChange} label="Gender">
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Date of Birth" name="dob" type="date" value={adminForm.dob} onChange={handleAdminChange} InputLabelProps={{ shrink: true }} required fullWidth />
+                    </Grid>
+                  </Grid>
+
+                  <TextField label="Password" name="password" type="password" value={adminForm.password} onChange={handleAdminChange} required fullWidth />
+
+                  <Button type="submit" variant="contained" color="primary" disabled={adminSubmitting} size="large" sx={{ mt: 1 }}>
+                    {adminSubmitting ? 'Adding…' : 'Add Admin'}
+                  </Button>
+                </Box>
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1 }}>
+                  <PersonAddIcon color="primary" />
+                  <Typography variant="h6" fontWeight="bold">
+                    Add Doctor
+                  </Typography>
+                </Box>
+                {doctorSuccess && <Alert severity="success" sx={{ mb: 2 }}>{doctorSuccess}</Alert>}
+                <Box component="form" onSubmit={submitDoctor} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="First Name" name="firstName" value={doctorForm.firstName} onChange={handleDoctorChange} required fullWidth />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Last Name" name="lastName" value={doctorForm.lastName} onChange={handleDoctorChange} required fullWidth />
+                    </Grid>
+                  </Grid>
+                  <TextField label="Email" name="email" type="email" value={doctorForm.email} onChange={handleDoctorChange} required fullWidth />
+                  <TextField label="Phone" name="phone" value={doctorForm.phone} onChange={handleDoctorChange} required fullWidth />
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Gender</InputLabel>
+                        <Select name="gender" value={doctorForm.gender} onChange={handleDoctorChange} label="Gender">
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Date of Birth" name="dob" type="date" value={doctorForm.dob} onChange={handleDoctorChange} InputLabelProps={{ shrink: true }} required fullWidth />
+                    </Grid>
+                  </Grid>
+
+                  <TextField label="Department" name="doctorDepartment" value={doctorForm.doctorDepartment} onChange={handleDoctorChange} required fullWidth />
+                  <TextField label="Password" name="password" type="password" value={doctorForm.password} onChange={handleDoctorChange} required fullWidth />
+
+                  <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />} fullWidth sx={{ py: 1.5, justifyContent: 'flex-start' }}>
+                    {doctorAvatar ? doctorAvatar.name : 'Upload Avatar Image'}
+                    <input type="file" hidden accept="image/png,image/jpeg,image/webp" onChange={(e) => setDoctorAvatar(e.target.files?.[0] || null)} required />
+                  </Button>
+
+                  <Button type="submit" variant="contained" color="primary" disabled={doctorSubmitting} size="large" sx={{ mt: 1 }}>
+                    {doctorSubmitting ? 'Adding…' : 'Add Doctor'}
+                  </Button>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
+
+      {/* PAYMENTS TAB */}
+      {adminTab === 1 && (
+        <Box>
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+            Payment History
+          </Typography>
+          <Grid container spacing={2}>
+            {payments.length === 0 && (
+              <Grid item xs={12}>
+                <Typography color="text.secondary">No payments found.</Typography>
+              </Grid>
+            )}
+            {payments.map((p) => (
+              <Grid item xs={12} md={6} key={p._id}>
+                <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                  <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="h6" fontWeight="bold">
+                        ₹{p.amount} <Typography component="span" variant="subtitle1" color={p.status === 'Completed' ? 'success.main' : 'warning.main'}>- {p.status}</Typography>
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Method: {p.paymentMethod} • Date: {new Date(p.createdAt).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                    {p.status === 'Completed' && (
+                      <Button variant="outlined" color="primary" onClick={() => refundPayment(p._id)}>
+                        Refund
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* DOCUMENTS TAB */}
+      {adminTab === 2 && (
+        <Grid container spacing={4} sx={{ alignItems: 'flex-start' }}>
+          <Grid item xs={12} md={8}>
+            <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+              Documents
+            </Typography>
+            <Grid container spacing={2}>
+              {documents.length === 0 && (
+                <Grid item xs={12}>
+                  <Typography color="text.secondary">No documents found.</Typography>
+                </Grid>
+              )}
+              {documents.map((d) => (
+                <Grid item xs={12} key={d._id}>
+                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {d.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                          <Chip label={d.documentType} size="small" variant="outlined" />
+                          <Typography variant="body2" color="text.secondary">
+                            Patient: {d.patientId?.firstName} {d.patientId?.lastName}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <IconButton color="error" onClick={() => deleteDocument(d._id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, position: 'sticky', top: 24 }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                Upload Document
+              </Typography>
+              <Box component="form" onSubmit={submitDocument} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+                <FormControl fullWidth required>
+                  <InputLabel>Patient</InputLabel>
+                  <Select value={docForm.patientId} onChange={(e) => setDocForm({ ...docForm, patientId: e.target.value })} label="Patient">
                     {allPatients.map((p) => (
-                      <option key={p._id || p} value={p._id || p}>
+                      <MenuItem key={p._id || p} value={p._id || p}>
                         {p.firstName} {p.lastName} {p.phone ? `(${p.phone})` : ''}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Title</label>
-                  <input
-                    value={docForm.title}
-                    onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Type</label>
-                  <select
-                    value={docForm.documentType}
-                    onChange={(e) => setDocForm({ ...docForm, documentType: e.target.value })}
-                  >
-                    <option value="Prescription">Prescription</option>
-                    <option value="Lab Report">Lab Report</option>
-                    <option value="Medical Record">Medical Record</option>
-                    <option value="Invoice">Invoice</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>File</label>
-                  <input
-                    type="file"
-                    onChange={(e) => setDocFile(e.target.files?.[0] || null)}
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary" disabled={docSubmitting}>
-                  {docSubmitting ? 'Uploading...' : 'Upload'}
-                </button>
-              </form>
-            </section>
-          </div>
-        )}
-      </div>
-    </div>
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  label="Title"
+                  value={docForm.title}
+                  onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
+                  required
+                  fullWidth
+                />
+
+                <FormControl fullWidth>
+                  <InputLabel>Type</InputLabel>
+                  <Select value={docForm.documentType} onChange={(e) => setDocForm({ ...docForm, documentType: e.target.value })} label="Type">
+                    <MenuItem value="Prescription">Prescription</MenuItem>
+                    <MenuItem value="Lab Report">Lab Report</MenuItem>
+                    <MenuItem value="Medical Record">Medical Record</MenuItem>
+                    <MenuItem value="Invoice">Invoice</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  label="Description (Optional)"
+                  value={docForm.description}
+                  onChange={(e) => setDocForm({ ...docForm, description: e.target.value })}
+                  multiline
+                  rows={2}
+                  fullWidth
+                />
+
+                <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />} fullWidth sx={{ py: 1.5, justifyContent: 'flex-start' }}>
+                  {docFile ? docFile.name : 'Select File'}
+                  <input type="file" hidden onChange={(e) => setDocFile(e.target.files?.[0] || null)} required />
+                </Button>
+
+                <Button type="submit" variant="contained" color="primary" disabled={docSubmitting} size="large" sx={{ mt: 1 }}>
+                  {docSubmitting ? 'Uploading...' : 'Upload Document'}
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+
+        </Grid>
+      )}
+
+    </Container>
   )
 }
-

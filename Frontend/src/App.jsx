@@ -17,20 +17,25 @@ import ResetPassword from './pages/ResetPassword'
 import { useAuth } from './context/AuthContext'
 import { api } from './api'
 import Loading from './Components/Loading'
+
+import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button as MuiButton, IconButton, Box, Container } from '@mui/material';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+
 import './App.css'
 
 function App() {
   const navigate = useNavigate()
   const { isLoggedIn, userRole, loading, logout } = useAuth()
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light')
+  const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'light')
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
+    document.documentElement.setAttribute('data-theme', themeMode)
+    localStorage.setItem('theme', themeMode)
+  }, [themeMode])
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
+    setThemeMode(prev => (prev === 'light' ? 'dark' : 'light'))
   }
 
   const handleLogout = async () => {
@@ -50,52 +55,81 @@ function App() {
     }
   }
 
+  const muiTheme = createTheme({
+    palette: {
+      mode: themeMode,
+      primary: {
+        main: '#0ea5e9',
+      },
+      secondary: {
+        main: '#f59e0b',
+      },
+      background: {
+        default: themeMode === 'light' ? '#f8fafc' : '#0f172a',
+        paper: themeMode === 'light' ? '#ffffff' : '#1e293b',
+      }
+    },
+    typography: {
+      fontFamily: '"Outfit", "Inter", sans-serif',
+      button: {
+        textTransform: 'none',
+        fontWeight: 600,
+      }
+    },
+    shape: {
+      borderRadius: 12,
+    }
+  });
+
   if (loading) {
     return <Loading fullScreen />
   }
 
   return (
-    <>
-      <header className="header">
-        <div className="container header-inner">
-          <img src="/LOGO1.png" alt="Rahat Clinic Logo" className="Img-logo" />
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <AppBar position="sticky" color="inherit" elevation={1}>
+        <Container maxWidth="xl">
+          <Toolbar disableGutters sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Box display="flex" alignItems="center" component={Link} to="/" sx={{ textDecoration: 'none', color: 'inherit' }}>
+              <img src="/LOGO1.png" alt="Rahat Clinic Logo" style={{ height: 40, marginRight: 12 }} />
+              <Typography variant="h6" fontWeight="bold" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                Rahat Clinic
+              </Typography>
+            </Box>
 
-          <Link to="/" className="logo">Rahat Clinic</Link>
-          <nav className="nav">
-            <Link to="/">Home</Link>
-            <Link to="/book">Book Appointment</Link>
-            <Link to="/contact">Contact</Link>
-            {isLoggedIn && userRole === 'Admin' && <Link to="/admin">Admin</Link>}
-            {isLoggedIn && userRole === 'Admin' && <Link to="/admin/messages">Messages</Link>}
-            {isLoggedIn && userRole === 'Patient' && <Link to="/patient-dashboard">Dashboard</Link>}
-            {isLoggedIn && userRole === 'Patient' && <Link to="/profile">Profile</Link>}
-            {isLoggedIn && userRole === 'Doctor' && <Link to="/doctor-dashboard">Dashboard</Link>}
-            {isLoggedIn && userRole === 'patient' && <Link to="/pay">pay</Link>}
-            {/* <Link to="/pay">Pay</Link> */}
-            {isLoggedIn ? (
-              <>
-                <span style={{ color: 'var(--color-muted)' }}>({userRole})</span>
-                <button
-                  onClick={handleLogout}
-                  className="nav-btn"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="nav-btn">Login</Link>
-                <Link to="/register" className="nav-btn primary">Register</Link>
-              </>
-            )}
-            <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
-              {theme === 'light' ? '🌙' : '☀️'}
-            </button>
-          </nav>
-        </div>
-      </header>
-      <main>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              <MuiButton component={Link} to="/" color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Home</MuiButton>
+              <MuiButton component={Link} to="/book" color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Book Appointment</MuiButton>
+              <MuiButton component={Link} to="/contact" color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Contact</MuiButton>
+
+              {isLoggedIn && userRole === 'Admin' && <MuiButton component={Link} to="/admin" color="inherit">Admin</MuiButton>}
+              {isLoggedIn && userRole === 'Admin' && <MuiButton component={Link} to="/admin/messages" color="inherit">Messages</MuiButton>}
+              {isLoggedIn && userRole === 'Patient' && <MuiButton component={Link} to="/patient-dashboard" color="inherit">Dashboard</MuiButton>}
+              {isLoggedIn && userRole === 'Patient' && <MuiButton component={Link} to="/profile" color="inherit">Profile</MuiButton>}
+              {isLoggedIn && userRole === 'Doctor' && <MuiButton component={Link} to="/doctor-dashboard" color="inherit">Dashboard</MuiButton>}
+              {isLoggedIn && userRole === 'patient' && <MuiButton component={Link} to="/pay" color="inherit">Pay</MuiButton>}
+
+              {isLoggedIn ? (
+                <>
+                  <Typography variant="caption" color="text.secondary" sx={{ mx: 1, display: { xs: 'none', sm: 'block' } }}>({userRole})</Typography>
+                  <MuiButton onClick={handleLogout} color="inherit">Logout</MuiButton>
+                </>
+              ) : (
+                <>
+                  <MuiButton component={Link} to="/login" color="inherit">Login</MuiButton>
+                  <MuiButton component={Link} to="/register" variant="contained" color="primary">Register</MuiButton>
+                </>
+              )}
+              <IconButton onClick={toggleTheme} color="inherit">
+                {themeMode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
+              </IconButton>
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      <main style={{ minHeight: '80vh' }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -113,12 +147,13 @@ function App() {
           <Route path="/paymentSuccess" element={<PaymentSuccess />} />
         </Routes>
       </main>
-      <footer className="footer">
-        <div className="container">
-          <p>© {new Date().getFullYear()} Rahat Clinic. Care you can trust.</p>
-        </div>
-      </footer>
-    </>
+
+      <Box component="footer" sx={{ py: 4, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider', mt: 'auto', bgcolor: 'background.paper' }}>
+        <Typography variant="body2" color="text.secondary">
+          © {new Date().getFullYear()} Rahat Clinic. Care you can trust.
+        </Typography>
+      </Box>
+    </ThemeProvider>
   )
 }
 

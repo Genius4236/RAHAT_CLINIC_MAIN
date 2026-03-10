@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'
+import { Container, Typography, Box, Grid, TextField, Button, Alert, Link, Paper } from '@mui/material'
 
 const initial = { firstName: '', lastName: '', email: '', phone: '', message: '' }
 
@@ -30,42 +31,77 @@ export default function Contact() {
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 520, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Contact us</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Paper elevation={0} sx={{ p: 4, bgcolor: 'background.paper', borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" textAlign="center">
+          Contact us
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }} textAlign="center">
           Send a message and we’ll get back to you as soon as we can.
-        </p>
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>First name</label>
-              <input name="firstName" value={form.firstName} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>Last name</label>
-              <input name="lastName" value={form.lastName} onChange={handleChange} required />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input name="email" type="email" value={form.email} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label>Phone</label>
-            <input name="phone" value={form.phone} onChange={handleChange} required />
-          </div>
-          <div className="form-group">
-            <label>Message</label>
-            <textarea name="message" value={form.message} onChange={handleChange} required />
-          </div>
-          {error && <p className="error-msg">{error}</p>}
-          {success && <p className="success-msg">Message sent successfully. We’ll be in touch.</p>}
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
+        </Typography>
+
+        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 3 }}>Message sent successfully. We’ll be in touch.</Alert>}
+
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="First name"
+                name="firstName"
+                value={form.firstName}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Last name"
+                name="lastName"
+                value={form.lastName}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+          </Grid>
+
+          <TextField
+            fullWidth
+            label="Email"
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Phone"
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Message"
+            name="message"
+            multiline
+            rows={4}
+            value={form.message}
+            onChange={handleChange}
+            required
+          />
+
+          <Button type="submit" variant="contained" color="primary" disabled={loading} size="large" sx={{ mt: 2 }}>
             {loading ? 'Sending…' : 'Send message'}
-          </button>
-        </form>
-      </div>
-    </div>
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   )
 }

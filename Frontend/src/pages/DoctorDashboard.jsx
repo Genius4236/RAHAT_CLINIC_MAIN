@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { Container, Typography, Box, Grid, Card, CardContent, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tabs, Tab, Select, MenuItem, FormControl, InputLabel, Chip, IconButton, Divider, CircularProgress, Paper, RadioGroup, FormControlLabel, Radio } from '@mui/material'
+import VideoCallIcon from '@mui/icons-material/VideoCall'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
+import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 
 export default function DoctorDashboard() {
   const { user } = useAuth()
@@ -8,7 +13,7 @@ export default function DoctorDashboard() {
   const [availability, setAvailability] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('appointments')
+  const [activeTab, setActiveTab] = useState(0)
   const [availType, setAvailType] = useState('weekly') // 'weekly' or 'specific'
   const [availForm, setAvailForm] = useState({
     date: '',
@@ -50,7 +55,6 @@ export default function DoctorDashboard() {
     e.preventDefault()
     setSubmitting(true)
     try {
-      // Prepare the data based on availability type
       const formData = {
         startTime: availForm.startTime,
         endTime: availForm.endTime,
@@ -64,11 +68,9 @@ export default function DoctorDashboard() {
       }
 
       await api.setAvailability(formData)
-      // Reload availability
       const availRes = await api.getDoctorAvailability(user._id)
       setAvailability(availRes.availability || [])
       alert('Availability set successfully!')
-      // Reset form
       setAvailForm({
         ...availForm,
         date: '',
@@ -170,456 +172,339 @@ export default function DoctorDashboard() {
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="container">
-          <p>Loading dashboard…</p>
-        </div>
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading dashboard…</Typography>
+      </Container>
     )
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ display: 'grid', gap: '2rem' }}>
-        <header>
-          <h1 style={{ marginBottom: '0.25rem' }}>Welcome, Dr. {user?.firstName}</h1>
-          <p style={{ color: 'var(--color-muted)' }}>Doctor Dashboard</p>
-        </header>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+          Welcome, Dr. {user?.firstName}
+        </Typography>
+        <Typography color="text.secondary">
+          Doctor Dashboard
+        </Typography>
+      </Box>
 
-        {error && <p className="error-msg">{error}</p>}
+      {error && <Typography color="error" sx={{ mb: 3 }}>{error}</Typography>}
 
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--color-border)' }}>
-          <button
-            onClick={() => setActiveTab('appointments')}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: activeTab === 'appointments' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'appointments' ? 'white' : 'inherit',
-              border: 'none',
-              cursor: 'pointer',
-              borderBottom: activeTab === 'appointments' ? '3px solid var(--color-primary)' : 'none',
-              fontSize: '1rem',
-            }}
-          >
-            Appointments ({appointments.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('availability')}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: activeTab === 'availability' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'availability' ? 'white' : 'inherit',
-              border: 'none',
-              cursor: 'pointer',
-              borderBottom: activeTab === 'availability' ? '3px solid var(--color-primary)' : 'none',
-              fontSize: '1rem',
-            }}
-          >
-            Availability ({availability.length})
-          </button>
-        </div>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
+          <Tab label={`Appointments (${appointments.length})`} />
+          <Tab label={`Availability (${availability.length})`} />
+        </Tabs>
+      </Box>
 
-        {activeTab === 'appointments' && (
-          <section>
-            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-              Your Appointments
-            </h2>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {appointments.length === 0 && (
-                <p style={{ color: 'var(--color-muted)' }}>No appointments yet.</p>
-              )}
-              {appointments.map((a) => (
-                <div
-                  key={a._id}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: 'var(--radius)',
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                  }}
-                >
-                  <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                    <div style={{ fontWeight: 600 }}>
-                      {a.firstName} {a.lastName}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                      {a.department} • {new Date(a.appointment_date).toLocaleDateString()} at {a.appointment_time}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                      Payment: <strong style={{ color: a.paymentStatus === 'Completed' ? 'var(--color-success, #22c55e)' : 'var(--color-text)' }}>{a.paymentStatus === 'Completed' ? 'Successful' : a.paymentStatus || 'Pending'}</strong>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <label style={{ fontSize: '0.9rem' }}>Status:</label>
-                      <select
-                        value={a.status}
-                        onChange={(e) => handleStatusChange(a._id, e.target.value)}
-                        style={{
-                          padding: '0.35rem 0.5rem',
-                          borderRadius: 'var(--radius)',
-                          border: '1px solid var(--color-border)',
-                          background: 'var(--color-bg)',
-                          fontSize: '0.9rem',
-                          minWidth: 120,
-                        }}
+      {activeTab === 0 && (
+        <Box>
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+            Your Appointments
+          </Typography>
+          <Grid container spacing={3}>
+            {appointments.length === 0 && (
+              <Grid item xs={12}>
+                <Typography color="text.secondary">No appointments yet.</Typography>
+              </Grid>
+            )}
+            {appointments.map((a) => (
+              <Grid item xs={12} key={a._id}>
+                <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                  <CardContent sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" fontWeight="bold">
+                        {a.firstName} {a.lastName}
+                      </Typography>
+                      <Typography color="text.secondary" gutterBottom>
+                        {a.department} • {new Date(a.appointment_date).toLocaleDateString()} at {a.appointment_time}
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1, mb: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Typography variant="body2" sx={{ mr: 1 }}>
+                          Payment: <Box component="span" sx={{ color: a.paymentStatus === 'Completed' ? 'success.main' : 'text.primary', fontWeight: 'bold' }}>{a.paymentStatus === 'Completed' ? 'Successful' : a.paymentStatus || 'Pending'}</Box>
+                        </Typography>
+
+                        <FormControl size="small" variant="outlined" sx={{ minWidth: 120 }}>
+                          <InputLabel>Status</InputLabel>
+                          <Select
+                            value={a.status}
+                            label="Status"
+                            onChange={(e) => handleStatusChange(a._id, e.target.value)}
+                            sx={{
+                              bgcolor: 'background.paper',
+                              color: a.status === 'Pending' ? 'warning.main' : a.status === 'Accepted' ? 'success.main' : 'error.main',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            <MenuItem value="Pending">Pending</MenuItem>
+                            <MenuItem value="Accepted">Accepted</MenuItem>
+                            <MenuItem value="Rejected">Rejected</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 200 }}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => openNotesModal(a)}
+                        startIcon={<EditIcon />}
+                        fullWidth
                       >
-                        <option value="Pending">Pending</option>
-                        <option value="Accepted">Accepted</option>
-                        <option value="Rejected">Rejected</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => openNotesModal(a)}
-                      style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-                    >
-                      {a.appointmentNotes || a.prescription ? 'Edit Notes' : 'Add Notes / Prescription'}
-                    </button>
-                    {a.status === 'Accepted' && (
-                      <a
-                        href={getVideoMeetingUrl(a._id)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-primary"
-                        style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', textDecoration: 'none' }}
-                      >
-                        Join Video Call
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+                        {a.appointmentNotes || a.prescription ? 'Edit Notes' : 'Add Notes / Prescn.'}
+                      </Button>
+                      {a.status === 'Accepted' && (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          href={getVideoMeetingUrl(a._id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          startIcon={<VideoCallIcon />}
+                          fullWidth
+                        >
+                          Join Video Call
+                        </Button>
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
 
-        {activeTab === 'availability' && (
-          <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-            <div>
-              <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
+      {activeTab === 1 && (
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={5}>
+            <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
                 Set Availability
-              </h2>
-              
-              {/* Availability Type Toggle */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setAvailType('weekly')}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: availType === 'weekly' ? 'var(--color-primary)' : 'var(--color-surface)',
-                    color: availType === 'weekly' ? 'white' : 'inherit',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Weekly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAvailType('specific')}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: availType === 'specific' ? 'var(--color-primary)' : 'var(--color-surface)',
-                    color: availType === 'specific' ? 'white' : 'inherit',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Specific Date
-                </button>
-              </div>
+              </Typography>
 
-              <form onSubmit={handleAddAvailability} style={{ display: 'grid', gap: '1rem' }}>
+              <RadioGroup
+                row
+                value={availType}
+                onChange={(e) => setAvailType(e.target.value)}
+                sx={{ mb: 3 }}
+              >
+                <FormControlLabel value="weekly" control={<Radio />} label="Weekly" />
+                <FormControlLabel value="specific" control={<Radio />} label="Specific Date" />
+              </RadioGroup>
+
+              <Box component="form" onSubmit={handleAddAvailability} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {availType === 'specific' ? (
-                  <div className="form-group">
-                    <label>Date</label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={availForm.date}
-                      onChange={handleAvailChange}
-                      min={new Date().toISOString().split('T')[0]}
-                      required
-                    />
-                  </div>
+                  <TextField
+                    type="date"
+                    label="Date"
+                    name="date"
+                    value={availForm.date}
+                    onChange={handleAvailChange}
+                    inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                    InputLabelProps={{ shrink: true }}
+                    required
+                    fullWidth
+                  />
                 ) : (
-                  <div className="form-group">
-                    <label>Day of Week</label>
-                    <select name="dayOfWeek" value={availForm.dayOfWeek} onChange={handleAvailChange}>
-                      <option value="Monday">Monday</option>
-                      <option value="Tuesday">Tuesday</option>
-                      <option value="Wednesday">Wednesday</option>
-                      <option value="Thursday">Thursday</option>
-                      <option value="Friday">Friday</option>
-                      <option value="Saturday">Saturday</option>
-                      <option value="Sunday">Sunday</option>
-                    </select>
-                  </div>
+                  <FormControl fullWidth required>
+                    <InputLabel>Day of Week</InputLabel>
+                    <Select name="dayOfWeek" value={availForm.dayOfWeek} onChange={handleAvailChange} label="Day of Week">
+                      <MenuItem value="Monday">Monday</MenuItem>
+                      <MenuItem value="Tuesday">Tuesday</MenuItem>
+                      <MenuItem value="Wednesday">Wednesday</MenuItem>
+                      <MenuItem value="Thursday">Thursday</MenuItem>
+                      <MenuItem value="Friday">Friday</MenuItem>
+                      <MenuItem value="Saturday">Saturday</MenuItem>
+                      <MenuItem value="Sunday">Sunday</MenuItem>
+                    </Select>
+                  </FormControl>
                 )}
-                <div className="form-group">
-                  <label>Start Time</label>
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={availForm.startTime}
-                    onChange={handleAvailChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>End Time</label>
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={availForm.endTime}
-                    onChange={handleAvailChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Slot Duration (minutes)</label>
-                  <input
-                    type="number"
-                    name="slotDuration"
-                    value={availForm.slotDuration}
-                    onChange={handleAvailChange}
-                    min="15"
-                    max="120"
-                    required
-                  />
-                </div>
-                <button
+
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      type="time"
+                      label="Start Time"
+                      name="startTime"
+                      value={availForm.startTime}
+                      onChange={handleAvailChange}
+                      InputLabelProps={{ shrink: true }}
+                      required
+                      fullWidth
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      type="time"
+                      label="End Time"
+                      name="endTime"
+                      value={availForm.endTime}
+                      onChange={handleAvailChange}
+                      InputLabelProps={{ shrink: true }}
+                      required
+                      fullWidth
+                    />
+                  </Grid>
+                </Grid>
+
+                <TextField
+                  type="number"
+                  label="Slot Duration (minutes)"
+                  name="slotDuration"
+                  value={availForm.slotDuration}
+                  onChange={handleAvailChange}
+                  inputProps={{ min: 15, max: 120 }}
+                  required
+                  fullWidth
+                />
+
+                <Button
                   type="submit"
-                  className="btn btn-primary"
-                  style={{ width: '100%' }}
+                  variant="contained"
+                  color="primary"
+                  fullWidth
                   disabled={submitting}
+                  size="large"
+                  sx={{ mt: 1 }}
                 >
                   {submitting ? 'Setting…' : 'Set Availability'}
-                </button>
-              </form>
-            </div>
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
 
-            <div>
-              <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-                Current Schedule
-              </h2>
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {availability.length === 0 && (
-                  <p style={{ color: 'var(--color-muted)' }}>No availability set yet.</p>
-                )}
-                {availability.map((a) => (
-                  <div
-                    key={a._id}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: 'var(--radius)',
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 600, marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {a.dayOfWeek ? (
-                          <>
-                            <span>{a.dayOfWeek}</span>
-                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', background: 'var(--color-primary)', color: 'white' }}>
-                              Weekly
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span>{new Date(a.date).toLocaleDateString()}</span>
-                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', background: 'var(--color-warning)', color: 'white' }}>
-                              Specific
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                        {a.startTime} - {a.endTime} ({a.slotDuration} min slots)
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        className="btn btn-outline"
-                        onClick={() => openEditAvail(a)}
-                        style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => deleteAvailability(a._id)}
-                        style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
+          <Grid item xs={12} md={7}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+              Current Schedule
+            </Typography>
+            <Grid container spacing={2}>
+              {availability.length === 0 && (
+                <Grid item xs={12}>
+                  <Typography color="text.secondary">No availability set yet.</Typography>
+                </Grid>
+              )}
+              {availability.map((a) => (
+                <Grid item xs={12} key={a._id}>
+                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {a.dayOfWeek ? a.dayOfWeek : new Date(a.date).toLocaleDateString()}
+                          </Typography>
+                          <Chip
+                            label={a.dayOfWeek ? 'Weekly' : 'Specific'}
+                            color={a.dayOfWeek ? 'primary' : 'warning'}
+                            size="small"
+                          />
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          {a.startTime} - {a.endTime} ({a.slotDuration} min slots)
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton color="primary" onClick={() => openEditAvail(a)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => deleteAvailability(a._id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Grid>
+        </Grid>
+      )}
 
-        {notesModal && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-            }}
-            onClick={() => setNotesModal(null)}
-          >
-            <div
-              style={{
-                background: 'var(--color-bg)',
-                padding: '1.5rem',
-                borderRadius: 'var(--radius)',
-                maxWidth: 500,
-                width: '90%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 style={{ marginBottom: '0.5rem' }}>Notes & Prescription</h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--color-muted)', marginBottom: '1rem' }}>
-                {notesModal.firstName} {notesModal.lastName} • {notesModal.department}
-              </p>
-              <form onSubmit={handleAddNotes} style={{ display: 'grid', gap: '1rem' }}>
-                <div className="form-group">
-                  <label>Appointment Notes</label>
-                  <textarea
-                    name="appointmentNotes"
-                    value={notesForm.appointmentNotes}
-                    onChange={(e) => setNotesForm((f) => ({ ...f, appointmentNotes: e.target.value }))}
-                    rows={4}
-                    placeholder="Clinical notes, diagnosis, follow-up instructions..."
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)' }}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Prescription</label>
-                  <textarea
-                    name="prescription"
-                    value={notesForm.prescription}
-                    onChange={(e) => setNotesForm((f) => ({ ...f, prescription: e.target.value }))}
-                    rows={4}
-                    placeholder="Medications, dosage, duration..."
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={notesSubmitting}>
-                    {notesSubmitting ? 'Saving…' : 'Save'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    style={{ flex: 1 }}
-                    onClick={() => setNotesModal(null)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+      {/* Notes Modal */}
+      <Dialog open={!!notesModal} onClose={() => setNotesModal(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Notes & Prescription</DialogTitle>
+        <DialogContent dividers>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Patient: {notesModal?.firstName} {notesModal?.lastName} • {notesModal?.department}
+          </Typography>
+          <Box component="form" id="notes-form" onSubmit={handleAddNotes} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <TextField
+              label="Appointment Notes"
+              name="appointmentNotes"
+              multiline
+              rows={4}
+              value={notesForm.appointmentNotes}
+              onChange={(e) => setNotesForm((f) => ({ ...f, appointmentNotes: e.target.value }))}
+              placeholder="Clinical notes, diagnosis, follow-up instructions..."
+              fullWidth
+            />
+            <TextField
+              label="Prescription"
+              name="prescription"
+              multiline
+              rows={4}
+              value={notesForm.prescription}
+              onChange={(e) => setNotesForm((f) => ({ ...f, prescription: e.target.value }))}
+              placeholder="Medications, dosage, duration..."
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setNotesModal(null)} color="inherit">Cancel</Button>
+          <Button type="submit" form="notes-form" variant="contained" color="primary" disabled={notesSubmitting}>
+            {notesSubmitting ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        {editingAvail && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-            }}
-            onClick={() => setEditingAvail(null)}
-          >
-            <div
-              style={{
-                background: 'var(--color-bg)',
-                padding: '1.5rem',
-                borderRadius: 'var(--radius)',
-                maxWidth: 400,
-                width: '90%',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 style={{ marginBottom: '1rem' }}>Edit Availability</h3>
-              <form onSubmit={handleUpdateAvailability} style={{ display: 'grid', gap: '1rem' }}>
-                <div className="form-group">
-                  <label>Start Time</label>
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={editForm.startTime}
-                    onChange={handleEditAvailChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>End Time</label>
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={editForm.endTime}
-                    onChange={handleEditAvailChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Slot Duration (minutes)</label>
-                  <input
-                    type="number"
-                    name="slotDuration"
-                    value={editForm.slotDuration}
-                    onChange={handleEditAvailChange}
-                    min="15"
-                    max="120"
-                    required
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    style={{ flex: 1 }}
-                    onClick={() => setEditingAvail(null)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      {/* Edit Availability Modal */}
+      <Dialog open={!!editingAvail} onClose={() => setEditingAvail(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Edit Availability</DialogTitle>
+        <DialogContent dividers>
+          <Box component="form" id="edit-avail-form" onSubmit={handleUpdateAvailability} sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+            <TextField
+              type="time"
+              label="Start Time"
+              name="startTime"
+              value={editForm.startTime}
+              onChange={handleEditAvailChange}
+              InputLabelProps={{ shrink: true }}
+              required
+              fullWidth
+            />
+            <TextField
+              type="time"
+              label="End Time"
+              name="endTime"
+              value={editForm.endTime}
+              onChange={handleEditAvailChange}
+              InputLabelProps={{ shrink: true }}
+              required
+              fullWidth
+            />
+            <TextField
+              type="number"
+              label="Slot Duration (minutes)"
+              name="slotDuration"
+              value={editForm.slotDuration}
+              onChange={handleEditAvailChange}
+              inputProps={{ min: 15, max: 120 }}
+              required
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setEditingAvail(null)} color="inherit">Cancel</Button>
+          <Button type="submit" form="edit-avail-form" variant="contained" color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   )
 }

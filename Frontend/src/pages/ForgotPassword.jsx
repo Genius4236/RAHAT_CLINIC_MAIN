@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom'
 import { api } from '../api'
+import { Container, Box, Typography, TextField, Button, Alert, Paper, Link } from '@mui/material'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -31,51 +32,54 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 420, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Forgot password</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom textAlign="center">
+          Forgot password
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, textAlign: 'center' }}>
           Enter your email address and we'll send you a link to reset your password.
-        </p>
+        </Typography>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
+            label="Email Address"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            fullWidth
+          />
 
-          {error && <p className="error-msg">{error}</p>}
+          {error && <Alert severity="error">{error}</Alert>}
           {success && (
-            <p className="success-msg">
+            <Alert severity="success">
               Password reset link has been sent to your email. Check your inbox!
-            </p>
+            </Alert>
           )}
 
-          <button
+          <Button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%' }}
+            variant="contained"
+            color="primary"
+            size="large"
             disabled={loading}
+            fullWidth
           >
             {loading ? 'Sending…' : 'Send reset link'}
-          </button>
-        </form>
+          </Button>
+        </Box>
 
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--color-muted)' }}>
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
             Remember your password?{' '}
-            <Link to="/login" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
+            <Link component={RouterLink} to="/login" fontWeight="bold" color="primary" underline="hover">
               Log in
             </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+          </Typography>
+        </Box>
+      </Paper>
+    </Container>
   )
 }

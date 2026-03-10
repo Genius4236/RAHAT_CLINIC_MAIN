@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { Container, Typography, Box, Grid, Card, CardContent, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tabs, Tab, Chip, CircularProgress, IconButton } from '@mui/material'
+import VideoCallIcon from '@mui/icons-material/VideoCall'
+import PaymentIcon from '@mui/icons-material/Payment'
+import EditCalendarIcon from '@mui/icons-material/EditCalendar'
+import CancelIcon from '@mui/icons-material/Cancel'
 
 export default function PatientDashboard() {
   const { user } = useAuth()
@@ -8,14 +13,14 @@ export default function PatientDashboard() {
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('appointments')
-  
+  const [activeTab, setActiveTab] = useState(0)
+
   // Reschedule Modal States
   const [rescheduleModal, setRescheduleModal] = useState(null)
   const [rescheduleDate, setRescheduleDate] = useState('')
-  const [rescheduleTime, setRescheduleTime] = useState('') // NEW: Track selected time
-  const [availability, setAvailability] = useState([])     // NEW: Track available slots
-  const [availabilityLoading, setAvailabilityLoading] = useState(false) // NEW: Track loading state
+  const [rescheduleTime, setRescheduleTime] = useState('')
+  const [availability, setAvailability] = useState([])
+  const [availabilityLoading, setAvailabilityLoading] = useState(false)
   const [rescheduling, setRescheduling] = useState(false)
   const [paymentLoading, setPaymentLoading] = useState(null)
 
@@ -86,7 +91,6 @@ export default function PatientDashboard() {
     }
   }
 
-  // Load initial dashboard data
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -105,14 +109,12 @@ export default function PatientDashboard() {
     loadData()
   }, [])
 
-  // NEW: Fetch availability when the modal is open and the date changes
   useEffect(() => {
     const fetchSlots = async () => {
       if (rescheduleModal && rescheduleDate) {
         setAvailabilityLoading(true)
-        setRescheduleTime('') // Reset time when date changes
+        setRescheduleTime('')
         try {
-          // Make sure your backend can find the doctor by doctor._id or doctor ID string
           const doctorId = rescheduleModal.doctorId?._id || rescheduleModal.doctorId
           const res = await api.getAvailableSlots(doctorId, rescheduleDate)
           setAvailability(res.slots || [])
@@ -142,8 +144,6 @@ export default function PatientDashboard() {
 
   const handleReschedule = async (e) => {
     e.preventDefault()
-    
-    // UPDATED: Validate BOTH Date and Time
     if (!rescheduleDate || !rescheduleTime) {
       alert('Please select both a new date and an available time slot.')
       return
@@ -151,12 +151,11 @@ export default function PatientDashboard() {
 
     setRescheduling(true)
     try {
-      // UPDATED: Send BOTH to the API
       await api.rescheduleAppointment(rescheduleModal._id, {
         appointment_date: rescheduleDate,
         appointment_time: rescheduleTime,
       })
-      
+
       setAppointments((prev) =>
         prev.map((a) =>
           a._id === rescheduleModal._id
@@ -164,7 +163,7 @@ export default function PatientDashboard() {
             : a
         )
       )
-      
+
       closeModal()
       alert('Appointment rescheduled successfully!')
     } catch (err) {
@@ -174,7 +173,6 @@ export default function PatientDashboard() {
     }
   }
 
-  // Helper to neatly clear all modal states
   const closeModal = () => {
     setRescheduleModal(null)
     setRescheduleDate('')
@@ -184,311 +182,228 @@ export default function PatientDashboard() {
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="container">
-          <p>Loading dashboard…</p>
-        </div>
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading dashboard…</Typography>
+      </Container>
     )
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ display: 'grid', gap: '2rem' }}>
-        <header>
-          <h1 style={{ marginBottom: '0.25rem' }}>Welcome, {user?.firstName}</h1>
-          <p style={{ color: 'var(--color-muted)' }}>Patient Dashboard</p>
-        </header>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+          Welcome, {user?.firstName}
+        </Typography>
+        <Typography color="text.secondary">
+          Patient Dashboard
+        </Typography>
+      </Box>
 
-        {error && <p className="error-msg">{error}</p>}
+      {error && <Typography color="error" sx={{ mb: 3 }}>{error}</Typography>}
 
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--color-border)' }}>
-          <button
-            onClick={() => setActiveTab('appointments')}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: activeTab === 'appointments' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'appointments' ? 'white' : 'inherit',
-              border: 'none',
-              cursor: 'pointer',
-              borderBottom: activeTab === 'appointments' ? '3px solid var(--color-primary)' : 'none',
-              fontSize: '1rem',
-            }}
-          >
-            Appointments ({appointments.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('payments')}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: activeTab === 'payments' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'payments' ? 'white' : 'inherit',
-              border: 'none',
-              cursor: 'pointer',
-              borderBottom: activeTab === 'payments' ? '3px solid var(--color-primary)' : 'none',
-              fontSize: '1rem',
-            }}
-          >
-            Payments ({payments.length})
-          </button>
-        </div>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
+          <Tab label={`Appointments (${appointments.length})`} />
+          <Tab label={`Payments (${payments.length})`} />
+        </Tabs>
+      </Box>
 
-        {activeTab === 'appointments' && (
-          <section>
-            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-              My Appointments
-            </h2>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {appointments.length === 0 && (
-                <p style={{ color: 'var(--color-muted)' }}>No appointments booked yet.</p>
-              )}
-              {appointments.map((a) => (
-                <div
-                  key={a._id}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: 'var(--radius)',
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                  }}
-                >
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'start' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+      {activeTab === 0 && (
+        <Box>
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+            My Appointments
+          </Typography>
+          <Grid container spacing={3}>
+            {appointments.length === 0 && (
+              <Grid item xs={12}>
+                <Typography color="text.secondary">No appointments booked yet.</Typography>
+              </Grid>
+            )}
+            {appointments.map((a) => (
+              <Grid item xs={12} key={a._id}>
+                <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                  <CardContent sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" fontWeight="bold">
                         Dr. {a.doctor?.firstName} {a.doctor?.lastName}
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)', marginBottom: '0.5rem' }}>
+                      </Typography>
+                      <Typography color="text.secondary" gutterBottom>
                         {a.department} • {new Date(a.appointment_date).toLocaleDateString()} at {a.appointment_time}
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                        Status: <strong style={{ color: 'var(--color-text)' }}>{a.status}</strong>
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1, mb: 2, flexWrap: 'wrap' }}>
+                        <Chip label={`Status: ${a.status}`} color={a.status === 'Accepted' ? 'success' : a.status === 'Rejected' ? 'error' : 'warning'} size="small" />
                         {a.paymentStatus && (
-                          <> • Payment: <strong>{a.paymentStatus}</strong></>
+                          <Chip label={`Payment: ${a.paymentStatus}`} color={a.paymentStatus === 'Completed' ? 'success' : 'default'} size="small" variant="outlined" />
                         )}
-                      </div>
+                      </Box>
+
                       {(a.appointmentNotes || a.prescription) && (
-                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'var(--color-bg)', borderRadius: 'var(--radius)', fontSize: '0.9rem' }}>
+                        <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
                           {a.appointmentNotes && (
-                            <div style={{ marginBottom: a.prescription ? '0.5rem' : 0 }}>
-                              <strong>Notes:</strong>
-                              <p style={{ margin: '0.25rem 0 0', whiteSpace: 'pre-wrap' }}>{a.appointmentNotes}</p>
-                            </div>
+                            <Box sx={{ mb: a.prescription ? 2 : 0 }}>
+                              <Typography variant="subtitle2" fontWeight="bold">Notes:</Typography>
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{a.appointmentNotes}</Typography>
+                            </Box>
                           )}
                           {a.prescription && (
-                            <div>
-                              <strong>Prescription:</strong>
-                              <p style={{ margin: '0.25rem 0 0', whiteSpace: 'pre-wrap' }}>{a.prescription}</p>
-                            </div>
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight="bold">Prescription:</Typography>
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{a.prescription}</Typography>
+                            </Box>
                           )}
-                        </div>
+                        </Box>
                       )}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 160 }}>
                       {a.status === 'Accepted' && (
-                        <a
+                        <Button
+                          variant="outlined"
+                          color="primary"
                           href={`https://meet.jit.si/rahat-${a._id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn btn-outline"
-                          style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', textDecoration: 'none' }}
+                          startIcon={<VideoCallIcon />}
+                          fullWidth
                         >
-                          Join Video Call
-                        </a>
+                          Video Call
+                        </Button>
                       )}
                       {a.paymentStatus !== 'Completed' && a.status !== 'Rejected' && (
-                        <button
-                          className="btn btn-primary"
+                        <Button
+                          variant="contained"
+                          color="primary"
                           onClick={() => payForAppointment(a)}
                           disabled={!!paymentLoading}
-                          style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                          startIcon={<PaymentIcon />}
+                          fullWidth
                         >
                           {paymentLoading === a._id ? 'Opening…' : 'Pay (₹500)'}
-                        </button>
+                        </Button>
                       )}
                       {a.status !== 'Rejected' && (
                         <>
-                          <button
-                            className="btn btn-outline"
+                          <Button
+                            variant="outlined"
                             onClick={() => {
                               setRescheduleModal(a)
-                              setRescheduleDate(a.appointment_date.split('T')[0]) // Ensure safe date format for input
+                              setRescheduleDate(a.appointment_date.split('T')[0])
                             }}
-                            style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                            startIcon={<EditCalendarIcon />}
+                            fullWidth
                           >
                             Reschedule
-                          </button>
-                          <button
-                            className="btn btn-primary"
+                          </Button>
+                          <Button
+                            variant="text"
+                            color="error"
                             onClick={() => cancelAppointment(a._id)}
-                            style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                            startIcon={<CancelIcon />}
+                            fullWidth
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </>
                       )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
 
-        {/* --- Payments Section Snipped for Brevity (unchanged) --- */}
-        {activeTab === 'payments' && (
-          <section>
-            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-              Payment History
-            </h2>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {payments.length === 0 && (
-                <p style={{ color: 'var(--color-muted)' }}>No payments yet.</p>
-              )}
-              {payments.map((p) => (
-                <div
-                  key={p._id}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: 'var(--radius)',
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                  }}
-                >
-                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1rem', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>₹{p.amount}</div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--color-muted)' }}>
-                        {new Date(p.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                        Status:{' '}
-                        <strong
-                          style={{
-                            color: p.status === 'Completed' ? 'var(--color-success)' : 'var(--color-warning)',
-                          }}
-                        >
-                          {p.status}
-                        </strong>
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>
-                        ID: {p.transactionId || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+      {activeTab === 1 && (
+        <Box>
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+            Payment History
+          </Typography>
+          <Grid container spacing={3}>
+            {payments.length === 0 && (
+              <Grid item xs={12}>
+                <Typography color="text.secondary">No payments yet.</Typography>
+              </Grid>
+            )}
+            {payments.map((p) => (
+              <Grid item xs={12} sm={6} md={4} key={p._id}>
+                <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                  <CardContent>
+                    <Typography variant="h5" fontWeight="bold" gutterBottom>
+                      ₹{p.amount}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Date: {new Date(p.createdAt).toLocaleDateString()}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Status: <Box component="span" sx={{ color: p.status === 'Completed' ? 'success.main' : 'warning.main', fontWeight: 'bold' }}>{p.status}</Box>
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {p.transactionId || 'N/A'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
 
-        {/* UPDATED RESCHEDULE MODAL */}
-        {rescheduleModal && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-            }}
-            onClick={closeModal}
-          >
-            <div
-              style={{
-                background: 'var(--color-bg)',
-                padding: '2rem',
-                borderRadius: 'var(--radius)',
-                maxWidth: '460px', // Slightly wider to fit time slots nicely
-                width: '90%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 style={{ marginBottom: '1rem' }}>Reschedule Appointment</h2>
-              <p style={{ color: 'var(--color-muted)', marginBottom: '1.5rem' }}>
-                Select a new date and time for your appointment with Dr. {rescheduleModal.doctor?.firstName}{' '}
-                {rescheduleModal.doctor?.lastName}
-              </p>
+      <Dialog open={!!rescheduleModal} onClose={closeModal} maxWidth="sm" fullWidth>
+        <DialogTitle>Reschedule Appointment</DialogTitle>
+        <DialogContent dividers>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Select a new date and time for your appointment with Dr. {rescheduleModal?.doctor?.firstName} {rescheduleModal?.doctor?.lastName}
+          </Typography>
 
-              <form onSubmit={handleReschedule} style={{ display: 'grid', gap: '1.5rem' }}>
-                <div className="form-group">
-                  <label>New Appointment Date</label>
-                  <input
-                    type="date"
-                    value={rescheduleDate}
-                    onChange={(e) => setRescheduleDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    required
-                  />
-                </div>
+          <Box component="form" id="reschedule-form" onSubmit={handleReschedule} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <TextField
+              type="date"
+              label="New Appointment Date"
+              value={rescheduleDate}
+              onChange={(e) => setRescheduleDate(e.target.value)}
+              inputProps={{ min: new Date().toISOString().split('T')[0] }}
+              InputLabelProps={{ shrink: true }}
+              required
+              fullWidth
+            />
 
-                {/* NEW: Time Slot Selection Block */}
-                {rescheduleDate && (
-                  <div className="form-group">
-                    <label>Available Time Slots</label>
-                    {availabilityLoading ? (
-                      <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>Loading available slots…</p>
-                    ) : availability.length > 0 ? (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem' }}>
-                        {availability.map((slot) => (
-                          <button
-                            key={slot.time}
-                            type="button"
-                            onClick={() => setRescheduleTime(slot.time)}
-                            style={{
-                              padding: '0.5rem',
-                              borderRadius: 'var(--radius)',
-                              border: '1px solid var(--color-border)',
-                              background: rescheduleTime === slot.time ? 'var(--color-primary)' : 'var(--color-surface)',
-                              color: rescheduleTime === slot.time ? 'white' : 'inherit',
-                              cursor: slot.available ? 'pointer' : 'not-allowed',
-                              opacity: slot.available ? 1 : 0.5,
-                              fontWeight: rescheduleTime === slot.time ? 600 : 400,
-                              fontSize: '0.85rem'
-                            }}
-                            disabled={!slot.available}
-                          >
-                            {slot.time}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>No available slots for this date.</p>
-                    )}
-                  </div>
+            {rescheduleDate && (
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>Available Time Slots</Typography>
+                {availabilityLoading ? (
+                  <CircularProgress size={24} />
+                ) : availability.length > 0 ? (
+                  <Grid container spacing={1}>
+                    {availability.map((slot) => (
+                      <Grid item key={slot.time}>
+                        <Chip
+                          label={slot.time}
+                          onClick={() => setRescheduleTime(slot.time)}
+                          disabled={!slot.available}
+                          color={rescheduleTime === slot.time ? 'primary' : 'default'}
+                          variant={rescheduleTime === slot.time ? 'filled' : 'outlined'}
+                          sx={{ px: 1 }}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">No available slots for this date.</Typography>
                 )}
-
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    style={{ flex: 1 }}
-                    disabled={rescheduling}
-                  >
-                    {rescheduling ? 'Rescheduling…' : 'Confirm Reschedule'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    style={{ flex: 1 }}
-                    onClick={closeModal}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={closeModal} color="inherit">Cancel</Button>
+          <Button type="submit" form="reschedule-form" variant="contained" color="primary" disabled={rescheduling}>
+            {rescheduling ? 'Rescheduling…' : 'Confirm Reschedule'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   )
 }

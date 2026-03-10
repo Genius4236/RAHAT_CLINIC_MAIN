@@ -1,13 +1,21 @@
-export default function Button({ children, variant = 'primary', type = 'button', disabled = false, onClick, ...props }) {
+import { Button as MuiButton } from '@mui/material';
+
+export default function Button({ children, variant = 'primary', type = 'button', disabled = false, onClick, style, className, ...props }) {
+  const muiVariant = variant === 'outline' ? 'outlined' : 'contained';
+  const color = variant === 'danger' ? 'error' : 'primary';
+
   return (
-    <button
+    <MuiButton
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`btn btn-${variant}`}
+      variant={muiVariant}
+      color={color}
+      style={style}
+      className={className}
       {...props}
     >
       {children}
-    </button>
-  )
+    </MuiButton>
+  );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom'
 import { api } from '../api'
+import { Container, Box, Typography, TextField, Button, Alert, Paper, Link, CircularProgress } from '@mui/material'
 
 export default function ResetPassword() {
   const { token } = useParams()
@@ -65,80 +66,83 @@ export default function ResetPassword() {
 
   if (validating) {
     return (
-      <div className="page">
-        <div className="container">
-          <p>Validating reset link…</p>
-        </div>
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Validating reset link…</Typography>
+      </Container>
     )
   }
 
   if (!isTokenValid) {
     return (
-      <div className="page">
-        <div className="container" style={{ maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
-          <h1 style={{ marginBottom: '1rem' }}>Reset password</h1>
-          <p className="error-msg" style={{ marginBottom: '2rem' }}>{error}</p>
-          <Link to="/forgot-password" className="btn btn-primary">
+      <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+        <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}>
+          <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+            Reset Password
+          </Typography>
+          <Alert severity="error" sx={{ mb: 4, textAlign: 'left' }}>{error}</Alert>
+          <Button component={RouterLink} to="/forgot-password" variant="contained" color="primary">
             Request new reset link
-          </Link>
-        </div>
-      </div>
+          </Button>
+        </Paper>
+      </Container>
     )
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 420, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Reset password</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom textAlign="center">
+          Reset Password
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, textAlign: 'center' }}>
           Enter your new password below.
-        </p>
+        </Typography>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="form-group">
-            <label>New password</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 8 characters"
-              required
-            />
-          </div>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
+            label="New password"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="At least 8 characters"
+            required
+            fullWidth
+          />
 
-          <div className="form-group">
-            <label>Confirm password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your new password"
-              required
-            />
-          </div>
+          <TextField
+            label="Confirm password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm your new password"
+            required
+            fullWidth
+          />
 
-          {error && <p className="error-msg">{error}</p>}
+          {error && <Alert severity="error">{error}</Alert>}
 
-          <button
+          <Button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%' }}
+            variant="contained"
+            color="primary"
+            size="large"
             disabled={loading}
+            fullWidth
           >
             {loading ? 'Resetting…' : 'Reset password'}
-          </button>
-        </form>
+          </Button>
+        </Box>
 
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--color-muted)' }}>
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
             Remember your password?{' '}
-            <Link to="/login" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
+            <Link component={RouterLink} to="/login" fontWeight="bold" color="primary" underline="hover">
               Log in
             </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+          </Typography>
+        </Box>
+      </Paper>
+    </Container>
   )
 }

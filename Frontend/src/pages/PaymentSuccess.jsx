@@ -1,27 +1,42 @@
-import { useLocation, Link } from 'react-router-dom'
+import { useLocation, Link as RouterLink } from 'react-router-dom'
+import { Container, Typography, Box, Button, Paper, Stack } from '@mui/material'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 
 export default function PaymentSuccess() {
   const search = new URLSearchParams(useLocation().search)
   const reference = search.get('reference')
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Payment successful</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '1.5rem' }}>
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
+        <CheckCircleOutlineIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+          Payment Successful
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
           Thank you. Your payment was processed successfully.
-        </p>
+        </Typography>
+
         {reference && (
-          <p style={{ fontWeight: 500, marginBottom: '2rem' }}>
-            Reference ID: <span style={{ fontFamily: 'monospace' }}>{reference}</span>
-          </p>
+          <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 2, mb: 4 }}>
+            <Typography variant="body2" color="text.secondary">
+              Reference ID
+            </Typography>
+            <Typography variant="body1" fontFamily="monospace" fontWeight="bold">
+              {reference}
+            </Typography>
+          </Box>
         )}
-        <div className="hero-actions" style={{ justifyContent: 'center' }}>
-          <Link to="/book" className="btn btn-primary">Book another appointment</Link>
-          <Link to="/" className="btn btn-outline">Back to home</Link>
-        </div>
-      </div>
-    </div>
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+          <Button component={RouterLink} to="/book" variant="contained" color="primary" size="large">
+            Book Another Appointment
+          </Button>
+          <Button component={RouterLink} to="/" variant="outlined" size="large">
+            Back to Home
+          </Button>
+        </Stack>
+      </Paper>
+    </Container>
   )
 }
-

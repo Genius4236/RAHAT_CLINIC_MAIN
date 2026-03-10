@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
+import { Container, Typography, Box, Grid, TextField, Button, Paper, Alert, List, ListItem, ListItemText, Divider, ListItemButton } from '@mui/material'
 
 export default function AdminMessages() {
   const [messages, setMessages] = useState([])
@@ -61,143 +62,117 @@ export default function AdminMessages() {
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="container">
-          <p>Loading messages…</p>
-        </div>
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <Typography>Loading messages…</Typography>
+      </Container>
     )
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <section>
-          <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-            Contact Messages ({messages.length})
-          </h2>
-          {error && <p className="error-msg">{error}</p>}
-          <div style={{ display: 'grid', gap: '0.75rem', maxHeight: '600px', overflowY: 'auto' }}>
-            {messages.length === 0 && (
-              <p style={{ color: 'var(--color-muted)' }}>No messages received yet.</p>
-            )}
-            {messages.map((m) => (
-              <div
-                key={m._id}
-                onClick={() => setSelectedMessage(m)}
-                style={{
-                  padding: '1rem',
-                  borderRadius: 'var(--radius)',
-                  background: selectedMessage?._id === m._id ? 'var(--color-primary)' : 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  cursor: 'pointer',
-                  color: selectedMessage?._id === m._id ? 'white' : 'inherit',
-                }}
-              >
-                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                  {m.firstName} {m.lastName}
-                </div>
-                <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem', opacity: 0.8 }}>
-                  {m.email}
-                </div>
-                <div style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {m.message}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          {selectedMessage ? (
-            <div style={{ display: 'grid', gap: '1.5rem' }}>
-              <div>
-                <h3 style={{ marginBottom: '1rem' }}>Message Details</h3>
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  <div>
-                    <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>From</label>
-                    <p style={{ color: 'var(--color-muted)' }}>
-                      {selectedMessage.firstName} {selectedMessage.lastName}
-                    </p>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Email</label>
-                    <p style={{ color: 'var(--color-muted)' }}>{selectedMessage.email}</p>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Phone</label>
-                    <p style={{ color: 'var(--color-muted)' }}>{selectedMessage.phone}</p>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Message</label>
-                    <p style={{ color: 'var(--color-muted)', whiteSpace: 'pre-wrap' }}>
-                      {selectedMessage.message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <form onSubmit={handleReply} style={{ display: 'grid', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Reply</label>
-                  <textarea
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Type your reply here..."
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius)',
-                      border: '1px solid var(--color-border)',
-                      fontFamily: 'inherit',
-                      fontSize: '1rem',
-                      width: '100%',
-                      minHeight: '120px',
-                      resize: 'vertical',
+    <Container maxWidth="lg" sx={{ py: 8 }}>
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={5}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h5" fontWeight="bold">
+              Contact Messages ({messages.length})
+            </Typography>
+          </Box>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          <Paper elevation={0} variant="outlined" sx={{ maxHeight: 600, overflow: 'auto', borderRadius: 2 }}>
+            <List disablePadding>
+              {messages.length === 0 && (
+                <ListItem>
+                  <ListItemText primary="No messages received yet." sx={{ color: 'text.secondary', textAlign: 'center' }} />
+                </ListItem>
+              )}
+              {messages.map((m, index) => (
+                <div key={m._id}>
+                  <ListItemButton
+                    selected={selectedMessage?._id === m._id}
+                    onClick={() => setSelectedMessage(m)}
+                    sx={{
+                      py: 2,
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      '&.Mui-selected': { bgcolor: 'primary.light', color: 'primary.contrastText' },
                     }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={replying}
                   >
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {m.firstName} {m.lastName}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.8, mb: 1 }}>
+                      {m.email}
+                    </Typography>
+                    <Typography variant="body2" noWrap sx={{ width: '100%' }}>
+                      {m.message}
+                    </Typography>
+                  </ListItemButton>
+                  {index < messages.length - 1 && <Divider />}
+                </div>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={7}>
+          {selectedMessage ? (
+            <Paper elevation={0} variant="outlined" sx={{ p: 4, borderRadius: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Message Details</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Typography variant="caption" color="text.secondary" fontWeight="bold" textTransform="uppercase">From</Typography>
+                    <Typography variant="body1">{selectedMessage.firstName} {selectedMessage.lastName}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight="bold" textTransform="uppercase">Email</Typography>
+                    <Typography variant="body1">{selectedMessage.email}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight="bold" textTransform="uppercase">Phone</Typography>
+                    <Typography variant="body1">{selectedMessage.phone}</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="caption" color="text.secondary" fontWeight="bold" textTransform="uppercase">Message</Typography>
+                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', bgcolor: 'background.default', p: 2, borderRadius: 1, mt: 1 }}>
+                      {selectedMessage.message}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider />
+
+              <Box component="form" onSubmit={handleReply} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Reply"
+                  multiline
+                  rows={4}
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Type your reply here..."
+                />
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button type="submit" variant="contained" color="primary" disabled={replying}>
                     {replying ? 'Sending…' : 'Send Reply'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => handleDeleteMessage(selectedMessage._id)}
-                  >
+                  </Button>
+                  <Button variant="outlined" color="error" onClick={() => handleDeleteMessage(selectedMessage._id)}>
                     Delete
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={() => setSelectedMessage(null)}
-                  >
+                  </Button>
+                  <Button variant="text" onClick={() => setSelectedMessage(null)}>
                     Close
-                  </button>
-                </div>
-              </form>
-            </div>
+                  </Button>
+                </Box>
+              </Box>
+            </Paper>
           ) : (
-            <div
-              style={{
-                padding: '2rem',
-                textAlign: 'center',
-                color: 'var(--color-muted)',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <p>Select a message to view details and reply</p>
-            </div>
+            <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, bgcolor: 'background.paper', borderRadius: 3, border: '1px dashed', borderColor: 'divider' }}>
+              <Typography color="text.secondary">Select a message to view details and reply</Typography>
+            </Box>
           )}
-        </section>
-      </div>
-    </div>
+        </Grid>
+      </Grid>
+    </Container>
   )
 }

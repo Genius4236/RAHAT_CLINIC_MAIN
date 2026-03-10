@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { Container, Typography, Box, TextField, Button, Alert, Paper } from '@mui/material'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'
 
@@ -57,32 +58,39 @@ export default function Payment() {
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 420, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Payment</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
-          Pay securely using Razorpay. You&apos;ll be redirected back here after payment.
-        </p>
-        <div className="form-group">
-          <label>Amount (INR)</label>
-          <input
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+          Payment
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          Pay securely using Razorpay. You'll be redirected back here after payment.
+        </Typography>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
+            label="Amount (INR)"
             type="number"
-            min={1}
+            inputProps={{ min: 1 }}
             value={amount}
             onChange={(e) => setAmount(Number(e.target.value) || 0)}
+            fullWidth
           />
-        </div>
-        <button
-          className="btn btn-primary"
-          style={{ width: '100%' }}
-          onClick={startPayment}
-          disabled={!key || loading || amount <= 0}
-        >
-          {loading ? 'Processing…' : 'Pay now'}
-        </button>
-        {status && <p className="error-msg" style={{ marginTop: '1rem' }}>{status}</p>}
-      </div>
-    </div>
+
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={startPayment}
+            disabled={!key || loading || amount <= 0}
+            fullWidth
+          >
+            {loading ? 'Processing…' : 'Pay now'}
+          </Button>
+
+          {status && <Alert severity="error">{status}</Alert>}
+        </Box>
+      </Paper>
+    </Container>
   )
 }
-

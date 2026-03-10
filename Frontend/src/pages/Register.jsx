@@ -7,6 +7,7 @@ import Button from '../Components/Button'
 import Alert from '../Components/Alert'
 import Loading from '../Components/Loading'
 import { validators, validateForm } from '../utils/validators'
+import { Container, Typography, Box, FormControl, InputLabel, Select, MenuItem, Link as MuiLink } from '@mui/material'
 
 const initial = {
   firstName: '',
@@ -48,7 +49,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    
+
     // Validate form
     const validationErrors = validateForm(form, validationRules)
     if (Object.keys(validationErrors).length > 0) {
@@ -73,14 +74,16 @@ export default function Register() {
   }
 
   return (
-    <div className="page">
+    <Container maxWidth="sm" sx={{ py: 8 }}>
       <Alert message={error} type="error" onClose={() => setError('')} />
-      <div className="container" style={{ maxWidth: 420, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Create account</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
+      <Box sx={{ maxWidth: 420, mx: 'auto' }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" textAlign="center">
+          Create account
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }} textAlign="center">
           Register as a patient to book appointments.
-        </p>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Input
             label="First name"
             name="firstName"
@@ -88,6 +91,7 @@ export default function Register() {
             onChange={handleChange}
             error={errors.firstName}
             required
+            style={{ marginBottom: 0 }}
           />
 
           <Input
@@ -97,6 +101,7 @@ export default function Register() {
             onChange={handleChange}
             error={errors.lastName}
             required
+            style={{ marginBottom: 0 }}
           />
 
           <Input
@@ -107,6 +112,7 @@ export default function Register() {
             onChange={handleChange}
             error={errors.email}
             required
+            style={{ marginBottom: 0 }}
           />
 
           <Input
@@ -115,34 +121,25 @@ export default function Register() {
             value={form.phone}
             onChange={handleChange}
             placeholder="10-digit phone number"
-            maxLength={10}
             error={errors.phone}
             required
+            style={{ marginBottom: 0 }}
           />
 
-          <div>
-            <label htmlFor="gender" style={{ fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>
-              Gender
-            </label>
-            <select
+          <FormControl fullWidth>
+            <InputLabel id="gender-label">Gender</InputLabel>
+            <Select
+              labelId="gender-label"
               id="gender"
               name="gender"
               value={form.gender}
+              label="Gender"
               onChange={handleChange}
-              style={{
-                padding: '0.75rem',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius)',
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                width: '100%',
-                backgroundColor: 'var(--color-surface)',
-              }}
             >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
+              <MenuItem value="Male">Male</MenuItem>
+              <MenuItem value="Female">Female</MenuItem>
+            </Select>
+          </FormControl>
 
           <Input
             label="Date of birth"
@@ -152,6 +149,8 @@ export default function Register() {
             onChange={handleChange}
             error={errors.dob}
             required
+            InputLabelProps={{ shrink: true }}
+            style={{ marginBottom: 0 }}
           />
 
           <Input
@@ -162,17 +161,21 @@ export default function Register() {
             onChange={handleChange}
             error={errors.password}
             required
+            style={{ marginBottom: 0 }}
           />
 
-          <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%' }}>
+          <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', mt: 2, padding: '12px' }}>
             {loading ? 'Creating account…' : 'Register'}
           </Button>
-        </form>
+        </Box>
 
-        <p style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
-      </div>
-    </div>
+        <Typography variant="body2" sx={{ mt: 3, textAlign: 'center' }}>
+          Already have an account?{' '}
+          <MuiLink component={Link} to="/login" underline="hover">
+            Log in
+          </MuiLink>
+        </Typography>
+      </Box>
+    </Container>
   )
 }

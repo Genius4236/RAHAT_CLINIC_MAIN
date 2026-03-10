@@ -6,6 +6,7 @@ import Input from '../Components/Input'
 import Button from '../Components/Button'
 import Alert from '../Components/Alert'
 import Loading from '../Components/Loading'
+import { Container, Typography, Box, FormControl, InputLabel, Select, MenuItem, Link as MuiLink } from '@mui/material'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -19,7 +20,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    
+
     if (!email || !password) {
       setError('Please fill in all fields')
       return
@@ -42,37 +43,30 @@ export default function Login() {
   }
 
   return (
-    <div className="page">
+    <Container maxWidth="sm" sx={{ py: 8 }}>
       <Alert message={error} type="error" onClose={() => setError('')} />
-      <div className="container" style={{ maxWidth: 420, margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '0.5rem' }}>Log in</h1>
-        <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
+      <Box sx={{ maxWidth: 420, mx: 'auto', textAlign: 'center' }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          Log in
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
           Sign in to book or manage appointments.
-        </p>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label htmlFor="role" style={{ fontWeight: 500, display: 'block', marginBottom: '0.5rem' }}>
-              Role
-            </label>
-            <select
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
+          <FormControl fullWidth>
+            <InputLabel id="role-label">Role</InputLabel>
+            <Select
+              labelId="role-label"
               id="role"
               value={role}
+              label="Role"
               onChange={(e) => setRole(e.target.value)}
-              style={{
-                padding: '0.75rem',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius)',
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                width: '100%',
-                backgroundColor: 'var(--color-surface)',
-              }}
             >
-              <option value="Patient">Patient</option>
-              <option value="Admin">Admin</option>
-              <option value="Doctor">Doctor</option>
-            </select>
-          </div>
+              <MenuItem value="Patient">Patient</MenuItem>
+              <MenuItem value="Admin">Admin</MenuItem>
+              <MenuItem value="Doctor">Doctor</MenuItem>
+            </Select>
+          </FormControl>
 
           <Input
             label="Email"
@@ -82,6 +76,7 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
+            style={{ marginBottom: 0 }}
           />
 
           <Input
@@ -91,24 +86,28 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            style={{ marginBottom: 0 }}
           />
 
-          <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%' }}>
+          <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: '1rem', padding: '10px' }}>
             {loading ? 'Signing in…' : 'Sign in'}
           </Button>
-        </form>
+        </Box>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <p style={{ marginBottom: '1rem' }}>
-            <Link to="/forgot-password" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            <MuiLink component={Link} to="/forgot-password" underline="hover">
               Forgot password?
-            </Link>
-          </p>
-          <p>
-            Don't have an account? <Link to="/register">Register</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+            </MuiLink>
+          </Typography>
+          <Typography variant="body2">
+            Don't have an account?{' '}
+            <MuiLink component={Link} to="/register" underline="hover">
+              Register
+            </MuiLink>
+          </Typography>
+        </Box>
+      </Box>
+    </Container>
   )
 }
