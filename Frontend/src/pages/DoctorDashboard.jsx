@@ -153,6 +153,18 @@ export default function DoctorDashboard() {
     return `https://meet.jit.si/${roomName}`
   }
 
+  const handleDeleteAppointment = async (id) => {
+    if (window.confirm('Are you sure you want to delete this appointment?')) {
+      try {
+        await api.deleteAppointment(id)
+        setAppointments((prev) => prev.filter((a) => a._id !== id))
+        alert('Appointment deleted successfully!')
+      } catch (err) {
+        setError(err.message || 'Failed to delete appointment')
+      }
+    }
+  }
+
   const handleUpdateAvailability = async (e) => {
     e.preventDefault()
     if (!editingAvail) return
@@ -269,6 +281,15 @@ export default function DoctorDashboard() {
                           Join Video Call
                         </Button>
                       )}
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleDeleteAppointment(a._id)}
+                        startIcon={<DeleteIcon />}
+                        fullWidth
+                      >
+                        Delete
+                      </Button>
                     </Box>
                   </CardContent>
                 </Card>

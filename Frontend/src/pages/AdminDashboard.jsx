@@ -446,7 +446,7 @@ export default function AdminDashboard() {
                   <TextField label="Password" name="password" type="password" value={doctorForm.password} onChange={handleDoctorChange} required fullWidth />
 
                   <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />} fullWidth sx={{ py: 1.5, justifyContent: 'flex-start' }}>
-                    {doctorAvatar ? doctorAvatar.name : 'Upload Avatar Image'}
+                    {doctorAvatar ? doctorAvatar.name : 'Upload Image'}
                     <input type="file" hidden accept="image/png,image/jpeg,image/webp" onChange={(e) => setDoctorAvatar(e.target.files?.[0] || null)} required />
                   </Button>
 

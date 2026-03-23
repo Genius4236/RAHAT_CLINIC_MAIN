@@ -41,7 +41,7 @@ export default function Home() {
         <Typography variant="h4" component="h2" textAlign="center" fontWeight="bold" gutterBottom mb={6}>
           Why choose Rahat Clinic
         </Typography>
-        <Grid container spacing={4}>
+        <Grid container spacing={4} justifyContent="center">
           <Grid item xs={12} md={4}>
             <Card elevation={0} sx={{ height: '100%', textAlign: 'center', bgcolor: 'transparent' }}>
               <CardContent>
