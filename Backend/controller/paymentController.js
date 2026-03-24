@@ -6,19 +6,25 @@ import { Appointment } from "../models/appointmentSchema.js";
 import { instance } from "../config/razorpay.js";
 
 export const createPaymentOrder = catchAsyncErrors(async (req, res, next) => {
-    const { appointmentId, amount } = req.body;
+    const { appointmentId, amount, type, description } = req.body;
 
-    if (!appointmentId || !amount) {
-        return next(new ErrorHandler("Please provide appointmentId and amount", 400));
+    if (!amount) {
+        return next(new ErrorHandler("Please provide amount", 400));
     }
 
-    const appointment = await Appointment.findById(appointmentId);
-    if (!appointment) {
-        return next(new ErrorHandler("Appointment not found", 404));
-    }
+    if (type !== 'LabTest') {
+        if (!appointmentId) {
+            return next(new ErrorHandler("Please provide appointmentId", 400));
+        }
 
-    if (appointment.patientId.toString() !== req.user._id.toString()) {
-        return next(new ErrorHandler("Not authorized to pay for this appointment", 403));
+        const appointment = await Appointment.findById(appointmentId);
+        if (!appointment) {
+            return next(new ErrorHandler("Appointment not found", 404));
+        }
+
+        if (appointment.patientId.toString() !== req.user._id.toString()) {
+            return next(new ErrorHandler("Not authorized to pay for this appointment", 403));
+        }
     }
 
     if (!instance) {
@@ -31,11 +37,12 @@ export const createPaymentOrder = catchAsyncErrors(async (req, res, next) => {
     });
 
     const payment = await Payment.create({
-        appointmentId,
+        appointmentId: appointmentId || undefined,
         patientId: req.user._id,
         amount: Number(amount),
         status: "Pending",
         razorpayOrderId: razorpayOrder.id,
+        description: description || (type === 'LabTest' ? 'Lab Test Payment' : undefined),
     });
 
     res.status(201).json({
@@ -89,9 +96,11 @@ export const verifyPayment = catchAsyncErrors(async (req, res, next) => {
 
     await payment.save();
 
-    await Appointment.findByIdAndUpdate(payment.appointmentId, {
-        paymentStatus: "Completed",
-    });
+    if (payment.appointmentId) {
+        await Appointment.findByIdAndUpdate(payment.appointmentId, {
+            paymentStatus: "Completed",
+        });
+    }
 
     res.status(200).json({
         success: true,

@@ -14,6 +14,7 @@ import Payment from './pages/Payment'
 import PaymentSuccess from './pages/PaymentSuccess'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import DiagnosticLab from './pages/DiagnosticLab'
 import { useAuth } from './context/AuthContext'
 import { api } from './api'
 import Loading from './Components/Loading'
@@ -101,6 +102,7 @@ function App() {
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
               <MuiButton component={Link} to="/" color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Home</MuiButton>
               <MuiButton component={Link} to="/book" color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Book Appointment</MuiButton>
+              <MuiButton component={Link} to="/diagnostic-lab" color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Diagnostic Lab</MuiButton>
               <MuiButton component={Link} to="/contact" color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Contact</MuiButton>
 
               {isLoggedIn && userRole === 'Admin' && <MuiButton component={Link} to="/admin" color="inherit">Admin</MuiButton>}
@@ -137,6 +139,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/book" element={<BookAppointment />} />
+          <Route path="/diagnostic-lab" element={<DiagnosticLab />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/messages" element={<AdminMessages />} />

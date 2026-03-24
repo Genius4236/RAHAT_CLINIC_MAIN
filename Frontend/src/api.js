@@ -22,8 +22,8 @@ axiosInstance.interceptors.response.use(
 
 export const api = {
   // Auth
-  login: (email, password, role) =>
-    axiosInstance.post('/user/login', { email, password, role }),
+  login: (email, password) =>
+    axiosInstance.post('/user/login', { email, password }),
   register: (body) =>
     axiosInstance.post('/user/patient/register', body),
   logoutPatient: () => axiosInstance.post('/user/patient/logout'),
@@ -98,8 +98,8 @@ export const api = {
     axiosInstance.delete(`/availability/delete/${id}`),
 
   // Payments
-  createPaymentOrder: (appointmentId, amount) =>
-    axiosInstance.post('/payment/create-order', { appointmentId, amount }),
+  createPaymentOrder: (appointmentId, amount, type, description) =>
+    axiosInstance.post('/payment/create-order', { appointmentId, amount, type, description }),
   verifyPayment: (razorpay_payment_id, razorpay_order_id, razorpay_signature, appointmentId) =>
     axiosInstance.post('/payment/verify', {
       razorpay_payment_id,

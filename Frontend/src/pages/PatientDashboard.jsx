@@ -6,11 +6,13 @@ import VideoCallIcon from '@mui/icons-material/VideoCall'
 import PaymentIcon from '@mui/icons-material/Payment'
 import EditCalendarIcon from '@mui/icons-material/EditCalendar'
 import CancelIcon from '@mui/icons-material/Cancel'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 export default function PatientDashboard() {
   const { user } = useAuth()
   const [appointments, setAppointments] = useState([])
   const [payments, setPayments] = useState([])
+  const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState(0)
@@ -94,12 +96,14 @@ export default function PatientDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [appRes, payRes] = await Promise.all([
+        const [appRes, payRes, docRes] = await Promise.all([
           api.getMyAppointments().catch(() => ({ appointments: [] })),
           api.getPaymentHistory().catch(() => ({ payments: [] })),
+          user?._id ? api.getPatientDocuments(user._id).catch(() => ({ documents: [] })) : Promise.resolve({ documents: [] }),
         ])
         setAppointments(appRes.appointments || [])
         setPayments(payRes.payments || [])
+        setReports(docRes.documents || [])
       } catch (err) {
         setError(err.message || 'Failed to load data')
       } finally {
@@ -107,7 +111,7 @@ export default function PatientDashboard() {
       }
     }
     loadData()
-  }, [])
+  }, [user?._id])
 
   useEffect(() => {
     const fetchSlots = async () => {
@@ -206,6 +210,7 @@ export default function PatientDashboard() {
         <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
           <Tab label={`Appointments (${appointments.length})`} />
           <Tab label={`Payments (${payments.length})`} />
+          <Tab label={`Reports (${reports.length})`} />
         </Tabs>
       </Box>
 
@@ -343,6 +348,53 @@ export default function PatientDashboard() {
                     <Typography variant="caption" color="text.secondary">
                       ID: {p.transactionId || 'N/A'}
                     </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {activeTab === 2 && (
+        <Box>
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+            My Reports
+          </Typography>
+          <Grid container spacing={3}>
+            {reports.length === 0 && (
+              <Grid item xs={12}>
+                <Typography color="text.secondary">No reports available.</Typography>
+              </Grid>
+            )}
+            {reports.map((r) => (
+              <Grid item xs={12} sm={6} md={4} key={r._id}>
+                <Card variant="outlined" sx={{ borderRadius: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <Box sx={{ height: 200, width: '100%', overflow: 'hidden', borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.100' }}>
+                    {r.fileType?.includes('pdf') || r.filePath?.includes('.pdf') ? (
+                      <iframe src={r.filePath} width="100%" height="100%" style={{ border: 'none' }} title={r.title} />
+                    ) : (
+                      <img src={r.filePath} alt={r.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                  </Box>
+                  <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexGrow: 1, pt: 2 }}>
+                    <Box>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        {r.title}
+                      </Typography>
+                      <Chip label={r.documentType} size="small" variant="outlined" sx={{ mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        Date: {new Date(r.uploadedAt).toLocaleDateString()}
+                      </Typography>
+                      {r.description && (
+                        <Typography variant="body2" color="text.secondary">
+                          {r.description}
+                        </Typography>
+                      )}
+                    </Box>
+                    <IconButton color="primary" onClick={() => window.open(r.filePath, '_blank')}>
+                      <VisibilityIcon />
+                    </IconButton>
                   </CardContent>
                 </Card>
               </Grid>

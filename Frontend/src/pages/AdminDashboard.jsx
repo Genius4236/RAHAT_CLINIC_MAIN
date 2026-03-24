@@ -8,6 +8,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import SupportAgentIcon from '@mui/icons-material/SupportAgent'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState(null)
@@ -525,9 +526,14 @@ export default function AdminDashboard() {
                           </Typography>
                         </Box>
                       </Box>
-                      <IconButton color="error" onClick={() => deleteDocument(d._id)}>
-                        <DeleteIcon />
-                      </IconButton>
+                      <Box>
+                        <IconButton color="primary" onClick={() => window.open(d.filePath, '_blank')}>
+                          <VisibilityIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => deleteDocument(d._id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>

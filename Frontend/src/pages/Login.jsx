@@ -13,7 +13,6 @@ export default function Login() {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('Patient')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -28,9 +27,10 @@ export default function Login() {
 
     setLoading(true)
     try {
-      const response = await api.login(email, password, role)
-      login(role, response.user)
-      navigate(role === 'Patient' ? '/book' : '/')
+      const response = await api.login(email, password)
+      const assignedRole = response.user.role
+      login(assignedRole, response.user)
+      navigate(assignedRole === 'Patient' ? '/book' : '/')
     } catch (err) {
       setError(err.message || 'Login failed')
     } finally {
@@ -53,20 +53,6 @@ export default function Login() {
           Sign in to book or manage appointments.
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
-          <FormControl fullWidth>
-            <InputLabel id="role-label">Role</InputLabel>
-            <Select
-              labelId="role-label"
-              id="role"
-              value={role}
-              label="Role"
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <MenuItem value="Patient">Patient</MenuItem>
-              <MenuItem value="Admin">Admin</MenuItem>
-              <MenuItem value="Doctor">Doctor</MenuItem>
-            </Select>
-          </FormControl>
 
           <Input
             label="Email"

@@ -6,6 +6,7 @@ import VideoCallIcon from '@mui/icons-material/VideoCall'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 export default function DoctorDashboard() {
   const { user } = useAuth()
@@ -28,6 +29,8 @@ export default function DoctorDashboard() {
   const [notesModal, setNotesModal] = useState(null)
   const [notesForm, setNotesForm] = useState({ appointmentNotes: '', prescription: '' })
   const [notesSubmitting, setNotesSubmitting] = useState(false)
+  const [selectedPatientId, setSelectedPatientId] = useState('')
+  const [reports, setReports] = useState([])
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,6 +49,22 @@ export default function DoctorDashboard() {
     }
     loadData()
   }, [user])
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      if (selectedPatientId) {
+        try {
+          const res = await api.getPatientDocuments(selectedPatientId);
+          setReports(res.documents || []);
+        } catch (err) {
+          setError(err.message || 'Failed to fetch reports');
+        }
+      } else {
+        setReports([]);
+      }
+    };
+    fetchReports();
+  }, [selectedPatientId]);
 
   const handleAvailChange = (e) => {
     setAvailForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -182,6 +201,12 @@ export default function DoctorDashboard() {
     }
   }
 
+  const uniquePatients = Array.from(new Map(
+    appointments
+      .filter(a => a.patientId)
+      .map(a => [a.patientId?._id || a.patientId, a.patientId || {}])
+  ).values())
+
   if (loading) {
     return (
       <Container sx={{ py: 8, textAlign: 'center' }}>
@@ -208,6 +233,7 @@ export default function DoctorDashboard() {
         <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
           <Tab label={`Appointments (${appointments.length})`} />
           <Tab label={`Availability (${availability.length})`} />
+          <Tab label="Patient Reports" />
         </Tabs>
       </Box>
 
@@ -267,6 +293,18 @@ export default function DoctorDashboard() {
                         fullWidth
                       >
                         {a.appointmentNotes || a.prescription ? 'Edit Notes' : 'Add Notes / Prescn.'}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => {
+                          setSelectedPatientId(a.patientId?._id || a.patientId);
+                          setActiveTab(2);
+                        }}
+                        startIcon={<VisibilityIcon />}
+                        fullWidth
+                      >
+                        Patient Reports
                       </Button>
                       {a.status === 'Accepted' && (
                         <Button
@@ -442,6 +480,76 @@ export default function DoctorDashboard() {
             </Grid>
           </Grid>
         </Grid>
+      )}
+
+      {activeTab === 2 && (
+        <Box>
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+            Patient Reports
+          </Typography>
+          <FormControl fullWidth sx={{ mb: 4, maxWidth: 400 }}>
+            <InputLabel>Select Patient</InputLabel>
+            <Select
+              value={selectedPatientId}
+              label="Select Patient"
+              onChange={(e) => setSelectedPatientId(e.target.value)}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {uniquePatients.map((p) => (
+                <MenuItem key={p._id || Math.random()} value={p._id || p}>
+                  {p.firstName || 'Unknown'} {p.lastName || 'Patient'} {p.email ? `(${p.email})` : ''}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {selectedPatientId && (
+            <Grid container spacing={3}>
+              {reports.length === 0 && (
+                <Grid item xs={12}>
+                  <Typography color="text.secondary">No reports available for this patient.</Typography>
+                </Grid>
+              )}
+              {reports.map((r) => (
+                <Grid item xs={12} sm={6} md={4} key={r._id}>
+                  <Card variant="outlined" sx={{ borderRadius: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <Box sx={{ height: 200, width: '100%', overflow: 'hidden', borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.100' }}>
+                      {r.fileType?.includes('pdf') || r.filePath?.includes('.pdf') ? (
+                        <iframe src={r.filePath} width="100%" height="100%" style={{ border: 'none' }} title={r.title} />
+                      ) : (
+                        <img src={r.filePath} alt={r.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                    </Box>
+                    <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexGrow: 1, pt: 2 }}>
+                      <Box>
+                        <Typography variant="h6" fontWeight="bold" gutterBottom>
+                          {r.title}
+                        </Typography>
+                        <Chip label={r.documentType} size="small" variant="outlined" sx={{ mb: 1 }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Date: {new Date(r.uploadedAt).toLocaleDateString()}
+                        </Typography>
+                        {r.description && (
+                          <Typography variant="body2" color="text.secondary">
+                            {r.description}
+                          </Typography>
+                        )}
+                      </Box>
+                      <IconButton color="primary" onClick={() => window.open(r.filePath, '_blank')}>
+                        <VisibilityIcon />
+                      </IconButton>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+          {!selectedPatientId && (
+            <Typography color="text.secondary">Please select a patient to view their reports.</Typography>
+          )}
+        </Box>
       )}
 
       {/* Notes Modal */}
