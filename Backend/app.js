@@ -18,14 +18,14 @@ dbConnection();
 app.set("trust proxy", true);
 
 app.use(cors({
-    origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL, "http://localhost:5173", "http://localhost:5174","http://localhost:5176", "https://rahatclinic.netlify.app", "https://rahatdashboard.netlify.app"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+  origin: [process.env.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174", "https://rahatclinic.netlify.app"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
 }));
 
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(fileUpload({
   useTempFiles: true,

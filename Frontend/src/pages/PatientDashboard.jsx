@@ -345,9 +345,29 @@ export default function PatientDashboard() {
                     <Typography variant="body2" sx={{ mb: 1 }}>
                       Status: <Box component="span" sx={{ color: p.status === 'Completed' ? 'success.main' : 'warning.main', fontWeight: 'bold' }}>{p.status}</Box>
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" display="block">
                       ID: {p.transactionId || 'N/A'}
                     </Typography>
+                    {p.status === 'Pending' && p.appointmentId && (
+                      <Box sx={{ mt: 2 }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          startIcon={<PaymentIcon />}
+                          onClick={() => {
+                            const appt = {
+                              _id: p.appointmentId._id || p.appointmentId,
+                              department: p.appointmentId.department || 'Consultation'
+                            };
+                            payForAppointment(appt);
+                          }}
+                          disabled={!!paymentLoading}
+                          fullWidth
+                        >
+                          {paymentLoading === (p.appointmentId._id || p.appointmentId) ? 'Opening…' : 'Complete Payment'}
+                        </Button>
+                      </Box>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
