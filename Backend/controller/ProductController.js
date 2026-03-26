@@ -34,7 +34,7 @@ export const paymentVerification = async (req, res) => {
   const isAuthentic = expectedSignature === razorpay_signature;
   if (isAuthentic) {
     // return res.redirect(`http://localhost:5173/paymentSuccess?reference=${razorpay_payment_id}`);
-    return res.redirect(`https://rahatclinic.netlify.app/paymentSuccess?reference=${razorpay_payment_id}`);
+    return res.redirect(`${process.env.FRONTEND_URL}/paymentSuccess?reference=${razorpay_payment_id}`);
   } else {
     res.status(400).json({
       success: false,
