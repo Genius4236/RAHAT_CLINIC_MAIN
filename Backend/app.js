@@ -22,7 +22,7 @@ app.use(cors({
     "http://localhost:5173", "http://localhost:5174", "https://rahat-clinic-main.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
-  withCredentials: true,
+  credentials: true,
 }));
 
 app.use(cookieParser());
