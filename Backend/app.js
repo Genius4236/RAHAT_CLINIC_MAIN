@@ -19,7 +19,7 @@ app.set("trust proxy", true);
 
 app.use(cors({
   origin: [process.env.FRONTEND_URL, "https://rahatclinic.netlify.app",
-    "http://localhost:5173", "http://localhost:5174"
+    "http://localhost:5173", "http://localhost:5174", "https://rahat-clinic-main-1.onrender.com"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
