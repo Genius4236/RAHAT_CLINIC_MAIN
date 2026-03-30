@@ -19,7 +19,7 @@ export const patientRegister = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Email already Registered!", 400));
     }
 
-    const user = await User.create({ firstName, lastName, email, phone, password, gender, dob,/* nic,*/ role });
+    const user = await User.create({ firstName, lastName, email, phone, password, gender, dob, role });
     generateToken(user, "User Registered!", 200, res);
 
 });
@@ -46,8 +46,8 @@ export const login = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const addNewAdmin = catchAsyncErrors(async (req, res, next) => {
-    const { firstName, lastName, email, phone, password, gender, dob,/* nic*/ } = req.body;
-    if (!firstName || !lastName || !email || !phone || !password || !gender || !dob/* || !nic*/) {
+    const { firstName, lastName, email, phone, password, gender, dob, } = req.body;
+    if (!firstName || !lastName || !email || !phone || !password || !gender || !dob) {
         return next(new ErrorHandler("Please fill in all fields", 400));
     }
     const isRegistered = await User.findOne({ email });
@@ -57,7 +57,7 @@ export const addNewAdmin = catchAsyncErrors(async (req, res, next) => {
 
 
     const admin = await User.create({
-        firstName, lastName, email, phone, password, gender, dob, /*nic,*/ role: "Admin",
+        firstName, lastName, email, phone, password, gender, dob, role: "Admin",
     });
     res.status(200).json({
         success: true,
@@ -135,8 +135,8 @@ export const addNewDoctor = catchAsyncErrors(async (req, res, next) => {
     if (!allowedFormats.includes(docAvatar.mimetype)) {
         return next(new ErrorHandler("Invalid Format Not Supported!", 400));
     }
-    const { firstName, lastName, email, phone, password, gender, dob,/* nic,*/ doctorDepartment } = req.body;
-    if (!firstName || !lastName || !email || !phone || !password || !gender || !dob /*|| !nic*/ || !doctorDepartment) {
+    const { firstName, lastName, email, phone, password, gender, dob, doctorDepartment } = req.body;
+    if (!firstName || !lastName || !email || !phone || !password || !gender || !dob || !doctorDepartment) {
         return next(new ErrorHandler("Please Provide Full Details!", 400));
     }
     const isRegistered = await User.findOne({ email });
@@ -151,7 +151,7 @@ export const addNewDoctor = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Failed to Upload Doctor Avatar!", 500));
     }
     const doctor = await User.create({
-        firstName, lastName, email, phone, password, gender, dob, /*nic,*/ doctorDepartment, role: "Doctor", docAvatar: {
+        firstName, lastName, email, phone, password, gender, dob, doctorDepartment, role: "Doctor", docAvatar: {
             public_id: cloudinaryResponse.public_id,
             url: cloudinaryResponse.secure_url,
         },
