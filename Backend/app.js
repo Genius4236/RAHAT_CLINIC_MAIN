@@ -12,6 +12,7 @@ import productRouter from "./router/ProductRouter.js";
 import availabilityRouter from "./router/availabilityRouter.js";
 import paymentRouter from "./router/paymentRouter.js";
 import documentRouter from "./router/documentRouter.js";
+import chatRouter from "./router/chatRouter.js";
 
 const app = express();
 dbConnection();
@@ -41,6 +42,7 @@ app.use("/api/v1/product", productRouter);
 app.use("/api/v1/availability", availabilityRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/document", documentRouter);
+app.use("/api/v1/chat", chatRouter);
 
 
 

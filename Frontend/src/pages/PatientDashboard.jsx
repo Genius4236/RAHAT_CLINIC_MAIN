@@ -7,6 +7,7 @@ import PaymentIcon from '@mui/icons-material/Payment'
 import EditCalendarIcon from '@mui/icons-material/EditCalendar'
 import CancelIcon from '@mui/icons-material/Cancel'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import SmartToyIcon from '@mui/icons-material/SmartToy'
 
 export default function PatientDashboard() {
   const { user } = useAuth()
@@ -221,12 +222,12 @@ export default function PatientDashboard() {
           </Typography>
           <Grid container spacing={3}>
             {appointments.length === 0 && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography color="text.secondary">No appointments booked yet.</Typography>
               </Grid>
             )}
             {appointments.map((a) => (
-              <Grid item xs={12} key={a._id}>
+              <Grid size={{ xs: 12 }} key={a._id}>
                 <Card variant="outlined" sx={{ borderRadius: 3 }}>
                   <CardContent sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', gap: 2 }}>
                     <Box sx={{ flex: 1 }}>
@@ -328,12 +329,12 @@ export default function PatientDashboard() {
           </Typography>
           <Grid container spacing={3}>
             {payments.length === 0 && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography color="text.secondary">No payments yet.</Typography>
               </Grid>
             )}
             {payments.map((p) => (
-              <Grid item xs={12} sm={6} md={4} key={p._id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={p._id}>
                 <Card variant="outlined" sx={{ borderRadius: 3 }}>
                   <CardContent>
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
@@ -383,12 +384,12 @@ export default function PatientDashboard() {
           </Typography>
           <Grid container spacing={3}>
             {reports.length === 0 && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography color="text.secondary">No reports available.</Typography>
               </Grid>
             )}
             {reports.map((r) => (
-              <Grid item xs={12} sm={6} md={4} key={r._id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={r._id}>
                 <Card variant="outlined" sx={{ borderRadius: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <Box sx={{ height: 200, width: '100%', overflow: 'hidden', borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.100' }}>
                     {r.fileType?.includes('pdf') || r.filePath?.includes('.pdf') ? (
@@ -450,7 +451,7 @@ export default function PatientDashboard() {
                 ) : availability.length > 0 ? (
                   <Grid container spacing={1}>
                     {availability.map((slot) => (
-                      <Grid item key={slot.time}>
+                      <Grid size="auto" key={slot.time}>
                         <Chip
                           label={slot.time}
                           onClick={() => setRescheduleTime(slot.time)}

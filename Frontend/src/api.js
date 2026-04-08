@@ -140,6 +140,10 @@ export const api = {
       params: { page, limit, patientId },
     }),
 
+  // Health assistant (patient)
+  chatHealthQuery: (message) =>
+    axiosInstance.post('/chat/query', { message }),
+
   // Password Reset
   requestPasswordReset: (email) =>
     axiosInstance.post('/user/password/request-reset', { email }),

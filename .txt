@@ -1,1 +1,46 @@
 In the admin dashboard Add a feature In Which The admin can add the PDF files or the different files With respect to the patient ID The patient can access Direct with there login 
+
+1.Appointment reminders
+
+
+2.Medicine reminders
+Medicine & Prescription Manager
+Features
+Doctor uploads prescription
+Patient:
+views medicines
+marks as taken
+gets reminders
+
+
+3.AI Chatbot for Basic Queries
+ Example
+
+User asks:
+
+“I have headache, what should I do?”
+
+Bot replies with:
+
+advice
+next steps
+doctor suggestion
+
+4.Map integration
+
+5.Doctor-Patient Secure Chat
+Features
+real-time chat
+file sharing (reports)
+message history
+Tech
+Firebase
+
+6.Auto Medical Certificate Generator
+ Doctor clicks:
+
+→ generates PDF certificate
+
+ Use case
+college leave
+sick leave
