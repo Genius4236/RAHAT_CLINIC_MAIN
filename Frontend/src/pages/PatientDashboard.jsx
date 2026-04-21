@@ -208,10 +208,10 @@ export default function PatientDashboard() {
       {error && <Typography color="error" sx={{ mb: 3 }}>{error}</Typography>}
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
-          <Tab label={`Appointments (${appointments.length})`} />
-          <Tab label={`Payments (${payments.length})`} />
-          <Tab label={`Reports (${reports.length})`} />
+        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
+          <Tab label={`Appointments (${appointments.length})`} sx={{ minWidth: 120, whiteSpace: 'nowrap' }} />
+          <Tab label={`Payments (${payments.length})`} sx={{ minWidth: 120, whiteSpace: 'nowrap' }} />
+          <Tab label={`Reports (${reports.length})`} sx={{ minWidth: 120, whiteSpace: 'nowrap' }} />
         </Tabs>
       </Box>
 
@@ -263,7 +263,7 @@ export default function PatientDashboard() {
                       )}
                     </Box>
 
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 160 }}>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'column' }, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 160, width: { xs: '100%', md: 'auto' } }}>
                       {a.status === 'Accepted' && (
                         <Button
                           variant="outlined"

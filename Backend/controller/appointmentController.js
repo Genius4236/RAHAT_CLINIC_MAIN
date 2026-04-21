@@ -3,6 +3,7 @@ import ErrorHandler from "../middlewares/errorMiddleware.js";
 import { Appointment } from "../models/appointmentSchema.js";
 import { User } from "../models/userSchema.js";
 import { Availability } from "../models/availabilitySchema.js";
+import { Payment } from "../models/paymentSchema.js";
 import {
     sendAppointmentConfirmation,
     sendAppointmentStatusUpdate,
@@ -124,6 +125,10 @@ export const postAppointment = catchAsyncErrors(async (req, res, next) => {
     // Send WhatsApp confirmation
     await sendAppointmentConfirmation(appointment);
 
+    if (req.app.get("io")) {
+        req.app.get("io").emit("appointment_update", { type: "NEW_APPOINTMENT", data: appointment });
+    }
+
     res.status(200).json({
         success: true,
         message: "Appointment Sent Successfully",
@@ -183,6 +188,11 @@ export const doctorUpdateAppointmentStatus = catchAsyncErrors(async (req, res, n
     // Send WhatsApp status update
     await sendAppointmentStatusUpdate(appointment);
 
+    if (req.app.get("io")) {
+        req.app.get("io").emit("appointment_update", { type: "STATUS_UPDATE", data: appointment });
+        req.app.get("io").emit("notification", { message: `Appointment ${status}` });
+    }
+
     res.status(200).json({
         success: true,
         message: "Appointment status updated successfully",
@@ -205,6 +215,10 @@ export const updateAppointmentStatus = catchAsyncErrors(async (req, res, next) =
     // Send WhatsApp status update if status was changed
     if (req.body.status) {
         await sendAppointmentStatusUpdate(appointment);
+    }
+
+    if (req.app.get("io")) {
+        req.app.get("io").emit("appointment_update", { type: "STATUS_UPDATE", data: appointment });
     }
 
     res.status(200).json({
@@ -310,6 +324,10 @@ export const rescheduleAppointment = catchAsyncErrors(async (req, res, next) => 
     // Send WhatsApp reschedule update
     await sendAppointmentReschedule(appointment);
 
+    if (req.app.get("io")) {
+        req.app.get("io").emit("appointment_update", { type: "RESCHEDULED", data: appointment });
+    }
+
     res.status(200).json({
         success: true,
         message: "Appointment rescheduled successfully",
@@ -347,5 +365,62 @@ export const addAppointmentNotes = catchAsyncErrors(async (req, res, next) => {
         success: true,
         message: "Notes added successfully",
         appointment: updated,
+    });
+});
+
+export const getAdminAnalytics = catchAsyncErrors(async (req, res, next) => {
+    const appointmentTrends = await Appointment.aggregate([
+        {
+            $group: {
+                _id: "$appointment_date",
+                appointments: { $sum: 1 }
+            }
+        },
+        { $sort: { _id: 1 } },
+        { $limit: 30 }
+    ]);
+
+    const revenueTrends = await Payment.aggregate([
+        { $match: { status: "Completed" } },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                revenue: { $sum: "$amount" }
+            }
+        },
+        { $sort: { _id: 1 } },
+        { $limit: 30 }
+    ]);
+
+    const topDoctors = await Appointment.aggregate([
+        {
+            $group: {
+                _id: "$doctorId",
+                doctorName: { $first: { $concat: ["Dr. ", "$doctor.firstName", " ", "$doctor.lastName"] } },
+                count: { $sum: 1 }
+            }
+        },
+        { $sort: { count: -1 } },
+        { $limit: 5 }
+    ]);
+
+    const topTests = await Payment.aggregate([
+        { $match: { description: { $regex: "Payment for", $options: "i" }, status: "Completed" } },
+        {
+            $group: {
+                _id: "$description",
+                count: { $sum: 1 }
+            }
+        },
+        { $sort: { count: -1 } },
+        { $limit: 5 }
+    ]);
+
+    res.status(200).json({
+        success: true,
+        appointmentTrends,
+        revenueTrends,
+        topDoctors,
+        topTests: topTests.map(t => ({ name: t._id.replace("Payment for ", ""), count: t.count }))
     });
 });

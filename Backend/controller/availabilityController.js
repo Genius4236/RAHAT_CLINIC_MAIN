@@ -55,6 +55,10 @@ export const setDoctorAvailability = catchAsyncErrors(async (req, res, next) => 
             });
         }
 
+        if (req.app.get("io")) {
+            req.app.get("io").emit("availability_update", { type: "DATE_SPECIFIC", data: availability });
+        }
+
         return res.status(200).json({
             success: true,
             message: "Date-specific availability set successfully",
@@ -99,6 +103,10 @@ export const setDoctorAvailability = catchAsyncErrors(async (req, res, next) => 
                 endTime,
                 slotDuration,
             });
+        }
+
+        if (req.app.get("io")) {
+            req.app.get("io").emit("availability_update", { type: "WEEKLY", data: availability });
         }
 
         res.status(200).json({

@@ -22,6 +22,9 @@ import Loading from './Components/Loading'
 
 import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button as MuiButton, IconButton, Box, Container } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
+import { io } from 'socket.io-client';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 import './App.css'
@@ -35,6 +38,34 @@ function App() {
     document.documentElement.setAttribute('data-theme', themeMode)
     localStorage.setItem('theme', themeMode)
   }, [themeMode])
+
+  useEffect(() => {
+    const backendUrl = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace('/api/v1', '')
+      : 'http://localhost:4000';
+
+    const socket = io(backendUrl, { withCredentials: true });
+
+    socket.on("notification", (data) => {
+      toast.info(data.message);
+    });
+
+    socket.on("appointment_update", (data) => {
+      if (data.type === "NEW_APPOINTMENT") toast.success("New appointment received!");
+      else if (data.type === "STATUS_UPDATE") toast.info("An appointment status was updated.");
+      else if (data.type === "RESCHEDULED") toast.info("An appointment was rescheduled.");
+    });
+
+    socket.on("payment_update", (data) => {
+      toast.success("Payment successful!");
+    });
+
+    socket.on("availability_update", (data) => {
+      toast.info("Doctor availability has changed.");
+    });
+
+    return () => socket.disconnect();
+  }, []);
 
   const toggleTheme = () => {
     setThemeMode(prev => (prev === 'light' ? 'dark' : 'light'))
@@ -90,6 +121,7 @@ function App() {
   return (
     <ThemeProvider theme={muiTheme}>
       <CssBaseline />
+      <ToastContainer position="top-right" autoClose={3000} />
       <AppBar position="sticky" color="inherit" elevation={1}>
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ display: 'flex', justifyContent: 'space-between' }}>

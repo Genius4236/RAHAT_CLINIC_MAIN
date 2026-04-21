@@ -11,4 +11,8 @@ npm install
 npm i axios react-icons react-multi-carousel react-router-dom react-toastify
 
 
+BOTH Backend and Frontend
+ npm install socket.io
 
+In frontend 
+ npm install recharts

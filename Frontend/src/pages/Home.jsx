@@ -31,10 +31,10 @@ export default function Home() {
     <Box>
       <Box sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', py: { xs: 8, md: 12 }, textAlign: 'center' }}>
         <Container maxWidth="md">
-          <Typography variant="h2" component="h1" fontWeight="bold" gutterBottom>
-            Care you can <Typography component="span" variant="h2" color="secondary.main" fontWeight="bold">trust</Typography>
+          <Typography variant="h2" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' } }} gutterBottom>
+            Care you can <Typography component="span" variant="h2" color="secondary.main" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' } }}>trust</Typography>
           </Typography>
-          <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
+          <Typography variant="h6" sx={{ mb: 4, opacity: 0.9, fontSize: { xs: '1rem', md: '1.25rem' } }}>
             Book appointments with experienced doctors, get timely care, and stay on top of your health — all in one place.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -162,7 +162,7 @@ export default function Home() {
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5 }}>
                     <MuiButton
                       component="a"
                       href={directionsUrl || '#'}
@@ -171,7 +171,7 @@ export default function Home() {
                       variant="contained"
                       color="primary"
                       startIcon={<DirectionsIcon />}
-                      sx={{ flex: 1, minWidth: 220 }}
+                      sx={{ flex: 1 }}
                       disabled={!directionsUrl}
                     >
                       Get directions
@@ -181,7 +181,7 @@ export default function Home() {
                       to="/contact"
                       variant="outlined"
                       color="primary"
-                      sx={{ flex: 1, minWidth: 180 }}
+                      sx={{ flex: 1 }}
                     >
                       Contact us
                     </MuiButton>
@@ -270,7 +270,7 @@ export default function Home() {
         <Typography variant="h6" color="text.secondary" mb={4}>
           Create an account or log in to schedule your appointment.
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, justifyContent: 'center' }}>
           <MuiButton component={Link} to="/register" variant="contained" color="primary" size="large">
             Create account
           </MuiButton>

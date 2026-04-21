@@ -74,6 +74,7 @@ export const api = {
     axiosInstance.post('/user/doctor/addnew', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  getAdminAnalytics: () => axiosInstance.get('/appointment/admin/analytics'),
 
   // User Profile
   updateProfile: (body) =>

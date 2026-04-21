@@ -129,11 +129,11 @@ export default function DiagnosticLab() {
     return (
         <Box sx={{ py: { xs: 8, md: 10 }, bgcolor: 'background.default' }}>
             <Container maxWidth="lg">
-                <Box sx={{ textAlign: 'center', mb: 8 }}>
-                    <Typography variant="h2" component="h1" fontWeight="bold" gutterBottom>
-                        Diagnostic <Typography component="span" variant="h2" color="primary.main" fontWeight="bold">Lab</Typography>
+                <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 8 }, px: { xs: 2, md: 0 } }}>
+                    <Typography variant="h2" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' } }} gutterBottom>
+                        Diagnostic <Typography component="span" variant="h2" color="primary.main" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', md: '3.75rem' } }}>Lab</Typography>
                     </Typography>
-                    <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 800, mx: 'auto' }}>
+                    <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 800, mx: 'auto', fontSize: { xs: '1rem', md: '1.25rem' } }}>
                         Book reliable, fast, and highly accurate laboratory tests covering a comprehensive spectrum of diagnostic requirements. Walk in today or book an appointment for sample collection.
                     </Typography>
                 </Box>
@@ -187,12 +187,12 @@ export default function DiagnosticLab() {
                     ))}
                 </Grid>
 
-                <Box sx={{ mt: 8, p: 4, bgcolor: 'primary.light', borderRadius: 4, textAlign: 'center', color: 'primary.contrastText', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="h4" fontWeight="bold">Can't find your specific test?</Typography>
-                    <Typography variant="h6" opacity={0.9} maxWidth={600}>
+                <Box sx={{ mt: { xs: 6, md: 8 }, p: { xs: 3, md: 4 }, bgcolor: 'primary.light', borderRadius: 4, textAlign: 'center', color: 'primary.contrastText', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' } }}>Can't find your specific test?</Typography>
+                    <Typography variant="h6" opacity={0.9} maxWidth={600} sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
                         Upload your doctor's prescription so our lab technicians can arrange the exact tests needed for your profile.
                     </Typography>
-                    <Button variant="contained" color="secondary" size="large" sx={{ mt: 2, px: 4 }}>
+                    <Button variant="contained" color="secondary" size="large" sx={{ mt: 2, px: 4, py: { xs: 1.5, md: 1 }, width: { xs: '100%', sm: 'auto' } }}>
                         Upload Prescription
                     </Button>
                 </Box>

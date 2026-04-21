@@ -102,6 +102,11 @@ export const verifyPayment = catchAsyncErrors(async (req, res, next) => {
         });
     }
 
+    if (req.app.get("io")) {
+        req.app.get("io").emit("payment_update", { type: "PAYMENT_COMPLETED", data: payment });
+        req.app.get("io").emit("notification", { message: `Payment verified for ${payment.description || 'Service'}` });
+    }
+
     res.status(200).json({
         success: true,
         message: "Payment verified successfully",

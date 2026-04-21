@@ -230,10 +230,10 @@ export default function DoctorDashboard() {
       {error && <Typography color="error" sx={{ mb: 3 }}>{error}</Typography>}
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
-          <Tab label={`Appointments (${appointments.length})`} />
-          <Tab label={`Availability (${availability.length})`} />
-          <Tab label="Patient Reports" />
+        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
+          <Tab label={`Appointments (${appointments.length})`} sx={{ minWidth: 120, whiteSpace: 'nowrap' }} />
+          <Tab label={`Availability (${availability.length})`} sx={{ minWidth: 120, whiteSpace: 'nowrap' }} />
+          <Tab label="Patient Reports" sx={{ minWidth: 120, whiteSpace: 'nowrap' }} />
         </Tabs>
       </Box>
 
@@ -285,7 +285,7 @@ export default function DoctorDashboard() {
                       </Box>
                     </Box>
 
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 200 }}>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'column' }, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 200, width: { xs: '100%', md: 'auto' } }}>
                       <Button
                         variant="outlined"
                         onClick={() => openNotesModal(a)}

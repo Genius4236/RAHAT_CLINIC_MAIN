@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
-import { Container, Typography, Box, Grid, TextField, Button, MenuItem, Paper, Alert } from '@mui/material'
+import { Container, Typography, Box, Grid, TextField, Button, MenuItem, Paper, Alert, Avatar, Divider, List, ListItem, ListItemIcon, ListItemText } from '@mui/material'
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import WcIcon from '@mui/icons-material/Wc';
+import EventIcon from '@mui/icons-material/Event';
 
 export default function UserProfile() {
   const { user } = useAuth()
@@ -108,8 +113,8 @@ export default function UserProfile() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 8 }}>
-      <Box sx={{ mb: 4 }}>
+    <Container maxWidth="sm" sx={{ py: { xs: 5, md: 8 } }}>
+      <Box sx={{ mb: { xs: 3, md: 4 } }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
           My Profile
         </Typography>
@@ -123,41 +128,67 @@ export default function UserProfile() {
 
       {!isEditing ? (
         <Box sx={{ display: 'grid', gap: 3 }}>
-          <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+          <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: '100px', bgcolor: 'background.default', borderBottom: '1px solid', borderColor: 'divider' }} />
+            <Box sx={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+              <Avatar sx={{ width: 100, height: 100, mb: 2, border: '4px solid white', boxShadow: 2 }}>
+                <PersonIcon sx={{ fontSize: 60 }} />
+              </Avatar>
+              <Typography variant="h5" fontWeight="bold">{form.firstName} {form.lastName}</Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                <EmailIcon fontSize="small" /> {form.email}
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>First Name</Typography>
-                <Typography variant="h6" fontWeight={500}>{form.firstName}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <PersonIcon color="action" />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>Full Name</Typography>
+                    <Typography variant="h6" fontWeight={500}>{form.firstName} {form.lastName}</Typography>
+                  </Box>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>Last Name</Typography>
-                <Typography variant="h6" fontWeight={500}>{form.lastName}</Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>Email</Typography>
-                <Typography variant="h6" fontWeight={500}>{form.email}</Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>Phone</Typography>
-                <Typography variant="h6" fontWeight={500}>{form.phone}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <PhoneIcon color="action" />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>Phone</Typography>
+                    <Typography variant="h6" fontWeight={500}>{form.phone}</Typography>
+                  </Box>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>Gender</Typography>
-                <Typography variant="h6" fontWeight={500}>{form.gender}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <WcIcon color="action" />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>Gender</Typography>
+                    <Typography variant="h6" fontWeight={500}>{form.gender}</Typography>
+                  </Box>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>Date of Birth</Typography>
-                <Typography variant="h6" fontWeight={500}>{form.dob ? new Date(form.dob).toLocaleDateString() : 'Not provided'}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <EventIcon color="action" />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>Date of Birth</Typography>
+                    <Typography variant="h6" fontWeight={500}>{form.dob ? new Date(form.dob).toLocaleDateString() : 'Not provided'}</Typography>
+                  </Box>
+                </Box>
               </Grid>
             </Grid>
           </Paper>
 
-          <Button variant="contained" color="primary" fullWidth size="large" onClick={() => setIsEditing(true)}>
+          <Button variant="contained" color="primary" fullWidth size="large" onClick={() => setIsEditing(true)} sx={{ py: 1.5, borderRadius: 2, fontWeight: 'bold' }}>
             Edit Profile
           </Button>
 
-          <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+          <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4 }}>
             <Typography variant="h6" fontWeight={600} gutterBottom>Change Password</Typography>
+            <Divider sx={{ mb: 3 }} />
             {!showChangePassword ? (
               <Button variant="outlined" color="primary" onClick={() => setShowChangePassword(true)} sx={{ mt: 1 }}>
                 Change Password
@@ -171,7 +202,7 @@ export default function UserProfile() {
                 <TextField fullWidth type="password" label="New Password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} required helperText="Minimum 8 characters" />
                 <TextField fullWidth type="password" label="Confirm New Password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} required />
 
-                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 1 }, mt: 1 }}>
                   <Button type="submit" variant="contained" color="primary" disabled={passwordLoading} sx={{ flex: 1 }}>
                     {passwordLoading ? 'Updating…' : 'Update Password'}
                   </Button>
@@ -189,7 +220,8 @@ export default function UserProfile() {
           </Paper>
         </Box>
       ) : (
-        <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+        <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom sx={{ mb: 3 }}>Edit Profile</Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -215,7 +247,7 @@ export default function UserProfile() {
               </Grid>
             </Grid>
 
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mt: 2 }}>
               <Button type="submit" variant="contained" color="primary" size="large" sx={{ flex: 1 }} disabled={loading}>
                 {loading ? 'Saving…' : 'Save Changes'}
               </Button>

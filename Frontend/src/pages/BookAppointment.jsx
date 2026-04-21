@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
-import { Container, Typography, Box, Grid, TextField, Button, FormControl, InputLabel, Select, MenuItem, Paper, Alert, Link as MuiLink } from '@mui/material'
+import { Container, Typography, Box, Grid, TextField, Button, FormControl, InputLabel, Select, MenuItem, Paper, Alert, Link as MuiLink, Divider, InputAdornment } from '@mui/material'
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EventIcon from '@mui/icons-material/Event';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import BadgeIcon from '@mui/icons-material/Badge';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 
 export default function BookAppointment() {
   const [doctors, setDoctors] = useState([])
@@ -128,7 +135,7 @@ export default function BookAppointment() {
   if (!patient) {
     return (
       <Container maxWidth="sm" sx={{ py: 12, textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom fontWeight="bold">Book an appointment</Typography>
+        <Typography variant="h3" gutterBottom fontWeight="extrabold" sx={{ letterSpacing: '-0.02em' }}>Book an appointment</Typography>
         <Typography color="text.secondary" sx={{ mb: 4 }}>
           You need to be logged in to book an appointment.
         </Typography>
@@ -141,35 +148,42 @@ export default function BookAppointment() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 8 }}>
-      <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          Book an appointment
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          Choose a doctor and time. We’ll confirm your booking.
-        </Typography>
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 10 }, px: { xs: 2, md: 3 } }}>
+      <Paper elevation={4} sx={{ p: { xs: 3, md: 6 }, borderRadius: 6, overflow: 'hidden', position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '8px', bgcolor: 'primary.main' }} />
 
-        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 3 }}>Appointment request sent. We’ll confirm shortly.</Alert>}
+        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 5 }, mt: 1 }}>
+          <Typography variant="h3" component="h1" gutterBottom fontWeight="extrabold" sx={{ letterSpacing: '-0.02em', fontSize: { xs: '2rem', md: '3rem' } }}>
+            Book an appointment
+          </Typography>
+          <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 'normal', fontSize: { xs: '1rem', md: '1.25rem' } }}>
+            Choose a doctor and time. We’ll confirm your booking.
+          </Typography>
+        </Box>
+
+        {error && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 4, borderRadius: 2 }}>Appointment request sent. We’ll confirm shortly.</Alert>}
 
         <Box component="form" onSubmit={handleSubmit}>
-          <Typography variant="h6" sx={{ mb: 2, mt: 2 }} fontWeight="bold">Personal Details</Typography>
-          <Grid container spacing={3}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3, mt: 2 }}>
+            <BadgeIcon color="primary" fontSize="large" />
+            <Typography variant="h5" fontWeight="bold">Personal Details</Typography>
+          </Box>
+          <Grid container spacing={4}>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="First name" name="firstName" value={form.firstName} onChange={handleChange} required />
+              <TextField fullWidth label="First name" name="firstName" value={form.firstName} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon color="action" /></InputAdornment> }} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Last name" name="lastName" value={form.lastName} onChange={handleChange} required />
+              <TextField fullWidth label="Last name" name="lastName" value={form.lastName} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon color="action" /></InputAdornment> }} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Email" type="email" name="email" value={form.email} onChange={handleChange} required />
+              <TextField fullWidth label="Email" type="email" name="email" value={form.email} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon color="action" /></InputAdornment> }} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Phone" name="phone" value={form.phone} onChange={handleChange} inputProps={{ maxLength: 10 }} required />
+              <TextField fullWidth label="Phone" name="phone" value={form.phone} onChange={handleChange} inputProps={{ maxLength: 10 }} required InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon color="action" /></InputAdornment> }} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Date of birth" type="date" name="dob" value={form.dob} onChange={handleChange} InputLabelProps={{ shrink: true }} required />
+              <TextField fullWidth label="Date of birth" type="date" name="dob" value={form.dob} onChange={handleChange} InputLabelProps={{ shrink: true }} required InputProps={{ startAdornment: <InputAdornment position="start"><EventIcon color="action" /></InputAdornment> }} />
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
@@ -181,12 +195,17 @@ export default function BookAppointment() {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <TextField fullWidth label="Address" name="address" value={form.address} onChange={handleChange} required />
+              <TextField fullWidth label="Address" name="address" value={form.address} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon color="action" /></InputAdornment> }} />
             </Grid>
           </Grid>
 
-          <Typography variant="h6" sx={{ mb: 2, mt: 4 }} fontWeight="bold">Appointment Details</Typography>
-          <Grid container spacing={3}>
+          <Divider sx={{ my: 5 }} />
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+            <MonitorHeartIcon color="primary" fontSize="large" />
+            <Typography variant="h5" fontWeight="bold">Appointment Details</Typography>
+          </Box>
+          <Grid container spacing={4}>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required>
                 <InputLabel id="doctor-label">Doctor</InputLabel>
@@ -240,8 +259,8 @@ export default function BookAppointment() {
             </Box>
           )}
 
-          <Button type="submit" variant="contained" color="primary" size="large" fullWidth sx={{ mt: 5, py: 1.5 }} disabled={submitLoading}>
-            {submitLoading ? 'Submitting…' : 'Request appointment'}
+          <Button type="submit" variant="contained" color="primary" size="large" fullWidth sx={{ mt: 6, py: 2, fontSize: '1.1rem', fontWeight: 'bold', borderRadius: 3, textTransform: 'none', boxShadow: 4 }} disabled={submitLoading}>
+            {submitLoading ? 'Submitting…' : 'Request Appointment'}
           </Button>
         </Box>
       </Paper>
